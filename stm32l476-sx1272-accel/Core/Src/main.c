@@ -162,7 +162,7 @@ void transmit(uint8_t str[27])
 				x5First = str[1] & 0x0F; //перевод правого бита 5го байта
 				x60First = str[2] >> 4; //перевод левого бита 6го байта
 				x65First = str[2] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalFirst, " %02d.%d%d ",xIntSumFirst, x5First, x60First);
+				sprintf(xvalFirst, "+%02d.%d%d ",xIntSumFirst, x5First, x60First);
 				if((str[0] >> 4) == 0x01)
 					xvalFirst[0] = '-';
 
@@ -172,7 +172,7 @@ void transmit(uint8_t str[27])
 				y8First = str[4] & 0x0F; //перевод правого бита 8го байта
 				y90First = str[5] >> 4; //перевод левого бита 9го байта
 				y95First = str[5] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalFirst, " %02d.%d%d ", yIntSumFirst, y8First, y90First);
+				sprintf(yvalFirst, "+%02d.%d%d ", yIntSumFirst, y8First, y90First);
 				if((str[3] >> 4) == 0x01)
 					yvalFirst[0] = '-';
 
@@ -182,7 +182,7 @@ void transmit(uint8_t str[27])
 				z11First = str[7] & 0x0F; //перевод правого бита 11го байта
 				z120First = str[8] >> 4; //перевод левого бита 12го байта
 				z125First = str[8] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalFirst, " %02d.%d%d ", zIntSumFirst, z11First, z120First);
+				sprintf(zvalFirst, "+%02d.%d%d ", zIntSumFirst, z11First, z120First);
 				if((str[6] >> 4) == 0x01)
 					zvalFirst[0] = '-';
 
@@ -193,7 +193,7 @@ void transmit(uint8_t str[27])
 				x5Second = str[10] & 0x0F; //перевод правого бита 5го байта
 				x60Second = str[11] >> 4; //перевод левого бита 6го байта
 				x65Second = str[11] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalSecond, " %02d.%d%d ",xIntSumSecond, x5Second, x60Second);
+				sprintf(xvalSecond, "+%02d.%d%d ",xIntSumSecond, x5Second, x60Second);
 				if((str[9] >> 4) == 0x01)
 					xvalSecond[0] = '-';
 
@@ -203,7 +203,7 @@ void transmit(uint8_t str[27])
 				y8Second = str[13] & 0x0F; //перевод правого бита 8го байта
 				y90Second = str[14] >> 4; //перевод левого бита 9го байта
 				y95Second = str[14] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalSecond, " %02d.%d%d ", yIntSumSecond, y8Second, y90Second);
+				sprintf(yvalSecond, "+%02d.%d%d ", yIntSumSecond, y8Second, y90Second);
 				if((str[12] >> 4) == 0x01)
 					yvalSecond[0] = '-';
 
@@ -213,7 +213,7 @@ void transmit(uint8_t str[27])
 				z11Second = str[16] & 0x0F; //перевод правого бита 11го байта
 				z120Second = str[17] >> 4; //перевод левого бита 12го байта
 				z125Second = str[17] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalSecond, " %02d.%d%d ", zIntSumSecond, z11Second, z120Second);
+				sprintf(zvalSecond, "+%02d.%d%d ", zIntSumSecond, z11Second, z120Second);
 				if((str[15] >> 4) == 0x01)
 					zvalSecond[0] = '-';
 
@@ -224,7 +224,7 @@ void transmit(uint8_t str[27])
 				x5Third = str[19] & 0x0F; //перевод правого бита 5го байта
 				x60Third = str[20] >> 4; //перевод левого бита 6го байта
 				x65Third = str[20] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalThird, " %02d.%d%d ",xIntSumThird, x5Third, x60Third);
+				sprintf(xvalThird, "+%02d.%d%d ",xIntSumThird, x5Third, x60Third);
 				if((str[18] >> 4) == 0x01)
 					xvalThird[0] = '-';
 
@@ -234,7 +234,7 @@ void transmit(uint8_t str[27])
 				y8Third = str[22] & 0x0F; //перевод правого бита 8го байта
 				y90Third = str[23] >> 4; //перевод левого бита 9го байта
 				y95Third = str[23] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalThird, " %02d.%d%d ", yIntSumThird, y8Third, y90Third);
+				sprintf(yvalThird, "+%02d.%d%d ", yIntSumThird, y8Third, y90Third);
 				if((str[21] >> 4) == 0x01)
 					yvalThird[0] = '-';
 
@@ -244,14 +244,14 @@ void transmit(uint8_t str[27])
 				z11Third = str[25] & 0x0F; //перевод правого бита 11го байта
 				z120Third = str[26] >> 4; //перевод левого бита 12го байта
 				z125Third = str[26] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalThird, " %02d.%d%d ", zIntSumThird, z11Third, z120Third);
+				sprintf(zvalThird, "+%02d.%d%d ", zIntSumThird, z11Third, z120Third);
 				if((str[24] >> 4) == 0x01)
 					zvalThird[0] = '-';
 //			}
 //		}
-		sprintf(str1, "%s%s%s %s%s%s %s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
+		sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
 	HAL_UART_Abort(&huart2);
-	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 66);
+	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
 
 
 

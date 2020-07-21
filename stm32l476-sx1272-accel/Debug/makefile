@@ -40,8 +40,8 @@ stm32l476-sx1272-accel.bin \
 all: stm32l476-sx1272-accel.elf secondary-outputs
 
 # Tool invocations
-stm32l476-sx1272-accel.elf: $(OBJS) $(USER_OBJS) /home/user/STM32CubeIDE/workspace_1.3.0/stm32l476-sx1272-accel/STM32L476RGTX_FLASH.ld
-	arm-none-eabi-gcc -o "stm32l476-sx1272-accel.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/user/STM32CubeIDE/workspace_1.3.0/stm32l476-sx1272-accel/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm32l476-sx1272-accel.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+stm32l476-sx1272-accel.elf: $(OBJS) $(USER_OBJS) /home/user/Рабочий\ стол/project2/stm32l476-sx1272-accel/STM32L476RGTX_FLASH.ld
+	arm-none-eabi-gcc -o "stm32l476-sx1272-accel.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/user/Рабочий стол/project2/stm32l476-sx1272-accel/STM32L476RGTX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm32l476-sx1272-accel.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

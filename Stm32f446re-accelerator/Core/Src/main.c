@@ -86,7 +86,7 @@ FRESULT fres;
 uint8_t str[][14] = {0};
 
 
-
+uint8_t mass[150];
 
 uint8_t srtAll[45];
 uint8_t package[3][14] = {0};
@@ -94,6 +94,7 @@ uint8_t packageCut[3][9] = {0};
 
 uint8_t ok[15] = {"Accel data ok\n"};
 uint8_t error[18] = {"Accel data error\n"};
+uint8_t byte[1] = {"\n"};
 uint8_t Txcomplite=0;
 
 
@@ -104,8 +105,26 @@ uint8_t accelNum = 0;
 
 int xIntSum, yIntSum, zIntSum;
 int x5, x60, x65, y8, y90, y95, z11, z120, z125;
-char xval[3][7], yval[3][7], zval[3][7], str1[3][22];
+char xval[3][7], yval[3][7], zval[3][7], str1[3][21];
 //char xval[7], yval[7], zval[7], str1[20];
+
+////первый акселерометр
+//int xIntSumFirst, yIntSumFirst, zIntSumFirst;
+//int x5First, x60First, x65First, y8First, y90First, y95First, z11First, z120First, z125First;
+////char xval[3][7], yval[3][7], zval[3][7], str1[3][16];
+//char xvalFirst[7], yvalFirst[7], zvalFirst[7];
+//
+////второй акслерометр
+//int xIntSumSecond, yIntSumSecond, zIntSumSecond;
+//int x5Second, x60Second, x65Second, y8Second, y90Second, y95Second, z11Second, z120Second, z125Second;
+////char xval[3][7], yval[3][7], zval[3][7], str1[3][16];
+//char xvalSecond[7], yvalSecond[7], zvalSecond[7];
+//
+////третий акселерометр
+//int xIntSumThird, yIntSumThird, zIntSumThird;
+//int x5Third, x60Third, x65Third, y8Third, y90Third, y95Third, z11Third, z120Third, z125Third;
+////char xval[3][7], yval[3][7], zval[3][7], str1[3][16];
+//char xvalThird[7], yvalThird[7], zvalThird[7], str1[67];
 
 uint8_t readFlag;
 uint8_t readFlag2;
@@ -113,7 +132,7 @@ uint8_t readFlag3;
 uint8_t UsartCount=0;
 uint32_t reciveTime;
 uint8_t rx_begin;
-uint8_t SD_Buff[74];
+uint8_t SD_Buff[73];
 uint8_t RadioBuff[28];
 
 // 1 - акселерометр с адресом 50
@@ -203,81 +222,10 @@ void PacketToRadio(void)
 
 }
 
-//void transmit(uint8_t str[3][14])
-//{
-//	for(int i = 0; i < 3; i++)
-//	{
-//		//маркер начала команды
-//		if(str[i][0] == 0x68)
-//		{
-//			//str[1] - длина команды в байтах
-//			//0x68 - команда возврата данных с акселерометра
-//			if(str[i][3] == 0x84)
-//			{
-//				// Ось Х
-//				xIntSum = (str[i][4] & 0x0F) * 10 + (str[i][5] >> 4); // целочисленная сумма X
-//				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
-//				x5 = str[i][5] & 0x0F; //перевод правого бита 5го байта
-//				x60 = str[i][6] >> 4; //перевод левого бита 6го байта
-//				x65 = str[i][6] & 0x0F; //перевод правого бита 6го байта
-//				sprintf(xval[i], " %02d%d%d",xIntSum, x5, x60);
-//				if((str[i][4] >> 4) == 0x01)
-//					xval[i][0] = '-';
-//
-//
-//				// Ось Y
-//				yIntSum = (str[i][7] & 0x0F) * 10 + (str[i][8] >> 4);	// целочисленная сумма Y
-//				//ySum = (str[8] & 0x0F) * 100 + (str[9] >> 4) * 10 + (str[9] & 0x0F); //цифры после запятой Y
-//				y8 = str[i][8] & 0x0F; //перевод правого бита 8го байта
-//				y90 = str[i][9] >> 4; //перевод левого бита 9го байта
-//				y95 = str[i][9] & 0x0F; //перевод правого бита 9го байта
-//				sprintf(yval[i], " %02d%d%d", yIntSum, y8, y90);
-//				if((str[i][7] >> 4) == 0x01)
-//					yval[i][0] = '-';
-//
-//				// Ось Z
-//				zIntSum = (str[i][10] & 0x0F) * 10 + (str[i][11] >> 4); //целочисленная сумма Z
-//				//zSum = (str[11] & 0x0F) * 100 + (str[12] >> 4) * 10 + (str[12] & 0x0F); //цифры после запятой Z
-//				z11 = str[i][11] & 0x0F; //перевод правого бита 11го байта
-//				z120 = str[i][12] >> 4; //перевод левого бита 12го байта
-//				z125 = str[i][12] & 0x0F; //перевод правого бита 12го байта
-//				sprintf(zval[i], " %02d%d%d", zIntSum, z11, z120);
-//				if((str[i][10] >> 4) == 0x01)
-//					zval[i][0] = '-';
-//			}
-//		}
-//		sprintf(str1[i], "%s%s%s", xval[i], yval[i], zval[i]);
-//	}
-//
-//
-//
-//
-//
-////		for(uint8_t i=0;i<16;i++)
-////		{
-////			str1[i+15]='1';
-////
-////		}
-////		str1[31]='\n';
-////	str1[0][15]='0';
-////	str1[1][15]='0';
-////	str1[2][15]='\n';
-////	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 48);
-//
-//
-//
-//	//NVIC_DisableIRQ(USART2_IRQn);
-//	//HAL_UART_Transmit(&huart2, (uint8_t*)str1, 45,100);
-//	//NVIC_EnableIRQ(USART2_IRQn);
-//
-//
-//
-//	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
-//	//HAL_UART_Transmit_IT(&huart3, accelSelect[accelNum], 5);
-//}
 
 void transmit(uint8_t str[3][9])
 {
+
 	for(int i = 0; i < 3; i++)
 	{
 		//маркер начала команды
@@ -289,32 +237,29 @@ void transmit(uint8_t str[3][9])
 //			{
 				// Ось Х
 				xIntSum = (str[i][0] & 0x0F) * 10 + (str[i][1] >> 4); // целочисленная сумма X
-				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
 				x5 = str[i][1] & 0x0F; //перевод правого бита 5го байта
 				x60 = str[i][2] >> 4; //перевод левого бита 6го байта
 				x65 = str[i][2] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xval[i], " %02d.%d%d;",xIntSum, x5, x60);
+				sprintf(xval[i], "+%02d.%d%d;",xIntSum, x5, x60);
 				if((str[i][0] >> 4) == 0x01)
 					xval[i][0] = '-';
 
 
 				// Ось Y
 				yIntSum = (str[i][3] & 0x0F) * 10 + (str[i][4] >> 4);	// целочисленная сумма Y
-				//ySum = (str[8] & 0x0F) * 100 + (str[9] >> 4) * 10 + (str[9] & 0x0F); //цифры после запятой Y
 				y8 = str[i][4] & 0x0F; //перевод правого бита 8го байта
 				y90 = str[i][5] >> 4; //перевод левого бита 9го байта
 				y95 = str[i][5] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yval[i], " %02d.%d%d;", yIntSum, y8, y90);
-				if((str[i][4] >> 4) == 0x01)
+				sprintf(yval[i], "+%02d.%d%d;", yIntSum, y8, y90);
+				if((str[i][3] >> 4) == 0x01)
 					yval[i][0] = '-';
 
 				// Ось Z
 				zIntSum = (str[i][6] & 0x0F) * 10 + (str[i][7] >> 4); //целочисленная сумма Z
-				//zSum = (str[11] & 0x0F) * 100 + (str[12] >> 4) * 10 + (str[12] & 0x0F); //цифры после запятой Z
 				z11 = str[i][7] & 0x0F; //перевод правого бита 11го байта
 				z120 = str[i][8] >> 4; //перевод левого бита 12го байта
 				z125 = str[i][8] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zval[i], " %02d.%d%d;", zIntSum, z11, z120);
+				sprintf(zval[i], "+%02d.%d%d;", zIntSum, z11, z120);
 				if((str[i][6] >> 4) == 0x01)
 					zval[i][0] = '-';
 //			}
@@ -323,8 +268,8 @@ void transmit(uint8_t str[3][9])
 	}
 
 
-	str1[0][21]=' ';
-	str1[1][21]=' ';
+	//str1[0][21]=' ';
+	//str1[1][21]=' ';
 	//str1[2][21]='\n';
 
 
@@ -332,6 +277,117 @@ void transmit(uint8_t str[3][9])
 
 
 }
+
+//void transmit(uint8_t str[27])
+//{
+//
+//
+//		//маркер начала команды
+////		if(str[0] == 0x68)
+////		{
+//			//str[1] - длина команды в байтах
+//			//0x68 - команда возврата данных с акселерометра
+////			if(str[3] == 0x84)
+////			{
+//				// первый акселерометр
+//				// Ось Х
+//				xIntSumFirst = (str[0] & 0x0F) * 10 + (str[1] >> 4); // целочисленная сумма X
+//				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
+//				x5First = str[1] & 0x0F; //перевод правого бита 5го байта
+//				x60First = str[2] >> 4; //перевод левого бита 6го байта
+//				x65First = str[2] & 0x0F; //перевод правого бита 6го байта
+//				sprintf(xvalFirst, "+%02d.%d%d ",xIntSumFirst, x5First, x60First);
+//				if((str[0] >> 4) == 0x01)
+//					xvalFirst[0] = '-';
+//
+//				// Ось Y
+//				yIntSumFirst = (str[3] & 0x0F) * 10 + (str[4] >> 4);	// целочисленная сумма Y
+//				//ySum = (str[8] & 0x0F) * 100 + (str[9] >> 4) * 10 + (str[9] & 0x0F); //цифры после запятой Y
+//				y8First = str[4] & 0x0F; //перевод правого бита 8го байта
+//				y90First = str[5] >> 4; //перевод левого бита 9го байта
+//				y95First = str[5] & 0x0F; //перевод правого бита 9го байта
+//				sprintf(yvalFirst, "+%02d.%d%d ", yIntSumFirst, y8First, y90First);
+//				if((str[3] >> 4) == 0x01)
+//					yvalFirst[0] = '-';
+//
+//				// Ось Z
+//				zIntSumFirst = (str[6] & 0x0F) * 10 + (str[7] >> 4); //целочисленная сумма Z
+//				//zSum = (str[11] & 0x0F) * 100 + (str[12] >> 4) * 10 + (str[12] & 0x0F); //цифры после запятой Z
+//				z11First = str[7] & 0x0F; //перевод правого бита 11го байта
+//				z120First = str[8] >> 4; //перевод левого бита 12го байта
+//				z125First = str[8] & 0x0F; //перевод правого бита 12го байта
+//				sprintf(zvalFirst, "+%02d.%d%d ", zIntSumFirst, z11First, z120First);
+//				if((str[6] >> 4) == 0x01)
+//					zvalFirst[0] = '-';
+//
+//				// второй акселерометр
+//				// Ось Х
+//				xIntSumSecond = (str[9] & 0x0F) * 10 + (str[10] >> 4); // целочисленная сумма X
+//				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
+//				x5Second = str[10] & 0x0F; //перевод правого бита 5го байта
+//				x60Second = str[11] >> 4; //перевод левого бита 6го байта
+//				x65Second = str[11] & 0x0F; //перевод правого бита 6го байта
+//				sprintf(xvalSecond, "+%02d.%d%d ",xIntSumSecond, x5Second, x60Second);
+//				if((str[9] >> 4) == 0x01)
+//					xvalSecond[0] = '-';
+//
+//				// Ось Y
+//				yIntSumSecond = (str[12] & 0x0F) * 10 + (str[13] >> 4);	// целочисленная сумма Y
+//				//ySum = (str[8] & 0x0F) * 100 + (str[9] >> 4) * 10 + (str[9] & 0x0F); //цифры после запятой Y
+//				y8Second = str[13] & 0x0F; //перевод правого бита 8го байта
+//				y90Second = str[14] >> 4; //перевод левого бита 9го байта
+//				y95Second = str[14] & 0x0F; //перевод правого бита 9го байта
+//				sprintf(yvalSecond, "+%02d.%d%d ", yIntSumSecond, y8Second, y90Second);
+//				if((str[12] >> 4) == 0x01)
+//					yvalSecond[0] = '-';
+//
+//				// Ось Z
+//				zIntSumSecond = (str[15] & 0x0F) * 10 + (str[16] >> 4); //целочисленная сумма Z
+//				//zSum = (str[11] & 0x0F) * 100 + (str[12] >> 4) * 10 + (str[12] & 0x0F); //цифры после запятой Z
+//				z11Second = str[16] & 0x0F; //перевод правого бита 11го байта
+//				z120Second = str[17] >> 4; //перевод левого бита 12го байта
+//				z125Second = str[17] & 0x0F; //перевод правого бита 12го байта
+//				sprintf(zvalSecond, "+%02d.%d%d ", zIntSumSecond, z11Second, z120Second);
+//				if((str[15] >> 4) == 0x01)
+//					zvalSecond[0] = '-';
+//
+//				// третий акселерометр
+//				// Ось Х
+//				xIntSumThird = (str[18] & 0x0F) * 10 + (str[19] >> 4); // целочисленная сумма X
+//				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
+//				x5Third = str[19] & 0x0F; //перевод правого бита 5го байта
+//				x60Third = str[20] >> 4; //перевод левого бита 6го байта
+//				x65Third = str[20] & 0x0F; //перевод правого бита 6го байта
+//				sprintf(xvalThird, "+%02d.%d%d ",xIntSumThird, x5Third, x60Third);
+//				if((str[18] >> 4) == 0x01)
+//					xvalThird[0] = '-';
+//
+//				// Ось Y
+//				yIntSumThird = (str[21] & 0x0F) * 10 + (str[22] >> 4);	// целочисленная сумма Y
+//				//ySum = (str[8] & 0x0F) * 100 + (str[9] >> 4) * 10 + (str[9] & 0x0F); //цифры после запятой Y
+//				y8Third = str[22] & 0x0F; //перевод правого бита 8го байта
+//				y90Third = str[23] >> 4; //перевод левого бита 9го байта
+//				y95Third = str[23] & 0x0F; //перевод правого бита 9го байта
+//				sprintf(yvalThird, "+%02d.%d%d ", yIntSumThird, y8Third, y90Third);
+//				if((str[21] >> 4) == 0x01)
+//					yvalThird[0] = '-';
+//
+//				// Ось Z
+//				zIntSumThird = (str[24] & 0x0F) * 10 + (str[25] >> 4); //целочисленная сумма Z
+//				//zSum = (str[11] & 0x0F) * 100 + (str[12] >> 4) * 10 + (str[12] & 0x0F); //цифры после запятой Z
+//				z11Third = str[25] & 0x0F; //перевод правого бита 11го байта
+//				z120Third = str[26] >> 4; //перевод левого бита 12го байта
+//				z125Third = str[26] & 0x0F; //перевод правого бита 12го байта
+//				sprintf(zvalThird, "+%02d.%d%d ", zIntSumThird, z11Third, z120Third);
+//				if((str[24] >> 4) == 0x01)
+//					zvalThird[0] = '-';
+////			}
+////		}
+//		sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
+//	HAL_UART_Abort(&huart2);
+//	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
+
+//}
 
 
 
@@ -374,8 +430,6 @@ void uint32_TO_charmass(uint32_t Number, uint8_t *mass, uint16_t startMass, uint
 
 	}
 }
-
-
 
 
 
@@ -466,8 +520,8 @@ int main(void)
 
 
 		HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
-		HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
 		HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
+		HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
 
 
 	//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
@@ -486,13 +540,19 @@ int main(void)
 //if (kolZapis == 0)
 //{
 
+
+
+		////////////////ФЛЕШКА
+
+
+
 	    fres = f_mount(&FatFs, "", 1); //1=mount now
 
 
 		  if (fres != FR_OK) {
 		   // myprintf("f_mount error (%i)\r\n", fres);
 
-			  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+			//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 		  }
 
@@ -506,13 +566,14 @@ int main(void)
 	  if(fres == FR_OK) {
 	 //   myprintf("I was able to open 'write.txt' for writing\r\n");
 	  } else {
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+		  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 	 //   myprintf("f_open error (%i)\r\n", fres);
 	  }
 //}
 
-
+	  UINT bytesWrote;
+/////////////////////////////////////////////////////////////////////////
 
   /* USER CODE END 2 */
 
@@ -532,9 +593,9 @@ int main(void)
 		  f_mount(NULL, "", 0);
 		  while(1)
 		  {
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+		  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
 		  HAL_Delay(500);
-		  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+		//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
 		  HAL_Delay(500);
 		  }
 	  }
@@ -574,40 +635,47 @@ int main(void)
 			//HAL_UART_Transmit_IT(&huart2, "\n",1);
 
 
-			  UINT bytesWrote;
+
 			  //fres = f_write(&fil, packageCut, 27, &bytesWrote);
 			  reciveTime = HAL_GetTick();
 			  uint32_TO_charmass(reciveTime, SD_Buff, 0, 8);
 
-			  for(uint8_t i=0;i<22;i++)
+			  SD_Buff[8]=';';
+			  for(uint8_t i=0;i<21;i++)
 						  {
-							  SD_Buff[i+8]=str1[0][i];
+							  SD_Buff[i+9]=str1[0][i];
 
 						  }
-			  for(uint8_t i=0;i<22;i++)
+			  for(uint8_t i=0;i<21;i++)
 						  {
 							  SD_Buff[i+30]=str1[1][i];
 
 						  }
-			  for(uint8_t i=0;i<22;i++)
+			  for(uint8_t i=0;i<21;i++)
 						  {
-							  SD_Buff[i+52]=str1[2][i];
+							  SD_Buff[i+51]=str1[2][i];
 
 						  }
 
-			  SD_Buff[73]='\n';
+			  SD_Buff[72]='\n';
+
+			  HAL_UART_Transmit_IT(&huart2, (uint8_t*)SD_Buff, 73);
+
+
+	  fres = f_write(&fil, &SD_Buff, sizeof(SD_Buff), &bytesWrote);
 
 
 
-			  fres = f_write(&fil, SD_Buff, sizeof(SD_Buff), &bytesWrote);
+			  //fres = f_write(&fil, byte, sizeof(byte), &bytesWrote);
 			  if(fres == FR_OK) {
 			  //  myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
 			  } else {
+
 			 //   myprintf("f_write error (%i)\r\n");
 			  }
 
 
-			  kolZapis++;
+			 // kolZapis++;
 			  if (kolZapis == 1000)
 			  {
 
@@ -953,13 +1021,13 @@ static void MX_GPIO_Init(void)
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
-                          |GPIO_PIN_6|GPIO_PIN_8, GPIO_PIN_RESET);
+                          |acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1|GPIO_PIN_4|SPI3_nss_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|acel2_Pin|acel2_2_Pin|GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -968,9 +1036,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
   /*Configure GPIO pins : PC1 PC2 PC3 PC4 
-                           PC6 PC8 */
+                           acel1_Pin acel1_1_Pin */
   GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
-                          |GPIO_PIN_6|GPIO_PIN_8;
+                          |acel1_Pin|acel1_1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -982,8 +1050,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA1 PA4 SPI3_nss_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_4|SPI3_nss_Pin;
+  /*Configure GPIO pins : acel3_Pin acel3_3_Pin SPI3_nss_Pin */
+  GPIO_InitStruct.Pin = acel3_Pin|acel3_3_Pin|SPI3_nss_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -996,15 +1064,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pin : PB13 */
-  GPIO_InitStruct.Pin = GPIO_PIN_13;
+  /*Configure GPIO pin : acel2_Pin */
+  GPIO_InitStruct.Pin = acel2_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
-  HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
+  HAL_GPIO_Init(acel2_GPIO_Port, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PB14 PB6 */
-  GPIO_InitStruct.Pin = GPIO_PIN_14|GPIO_PIN_6;
+  /*Configure GPIO pins : acel2_2_Pin PB6 */
+  GPIO_InitStruct.Pin = acel2_2_Pin|GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

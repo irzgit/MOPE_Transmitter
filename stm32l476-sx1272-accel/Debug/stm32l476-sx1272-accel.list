@@ -7,23 +7,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
   1 .text         00005bd8  08000190  08000190  00010190  2**4
                   CONTENTS, ALLOC, LOAD, READONLY, CODE
-  2 .rodata       000001b8  08005d68  08005d68  00015d68  2**2
+  2 .rodata       000001b4  08005d68  08005d68  00015d68  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  3 .ARM.extab    00000000  08005f20  08005f20  00020070  2**0
+  3 .ARM.extab    00000000  08005f1c  08005f1c  00020070  2**0
                   CONTENTS
-  4 .ARM          00000008  08005f20  08005f20  00015f20  2**2
+  4 .ARM          00000008  08005f1c  08005f1c  00015f1c  2**2
                   CONTENTS, ALLOC, LOAD, READONLY, DATA
-  5 .preinit_array 00000000  08005f28  08005f28  00020070  2**0
+  5 .preinit_array 00000000  08005f24  08005f24  00020070  2**0
                   CONTENTS, ALLOC, LOAD, DATA
-  6 .init_array   00000004  08005f28  08005f28  00015f28  2**2
+  6 .init_array   00000004  08005f24  08005f24  00015f24  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  7 .fini_array   00000004  08005f2c  08005f2c  00015f2c  2**2
+  7 .fini_array   00000004  08005f28  08005f28  00015f28  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  8 .data         00000070  20000000  08005f30  00020000  2**2
+  8 .data         00000070  20000000  08005f2c  00020000  2**2
                   CONTENTS, ALLOC, LOAD, DATA
-  9 .bss          000002b4  20000070  08005fa0  00020070  2**2
+  9 .bss          000002b4  20000070  08005f9c  00020070  2**2
                   ALLOC
- 10 ._user_heap_stack 00000604  20000324  08005fa0  00020324  2**0
+ 10 ._user_heap_stack 00000604  20000324  08005f9c  00020324  2**0
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  00020070  2**0
                   CONTENTS, READONLY
@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000aec1  00000000  00000000  0005bd91  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000ec10f  00000000  00000000  00066c52  2**0
+ 18 .debug_str    000ec158  00000000  00000000  00066c52  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  00152d61  2**0
+ 19 .comment      0000007b  00000000  00000000  00152daa  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00003698  00000000  00000000  00152ddc  2**2
+ 20 .debug_frame  00003698  00000000  00000000  00152e28  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -504,7 +504,7 @@ void Rf96_FreqChoose(uint8_t freq_value)
  80005d2:	3708      	adds	r7, #8
  80005d4:	46bd      	mov	sp, r7
  80005d6:	bd80      	pop	{r7, pc}
- 80005d8:	08005d8c 	.word	0x08005d8c
+ 80005d8:	08005d88 	.word	0x08005d88
 
 080005dc <Rf96_OutPower>:
 // Выбираем выходную мощность 0 -20 Дб, 1- 17 Дб, 2 - 14 Дб, 3 - 11 Дб
@@ -531,7 +531,7 @@ void Rf96_OutPower(uint8_t Power_value)
  80005fe:	3708      	adds	r7, #8
  8000600:	46bd      	mov	sp, r7
  8000602:	bd80      	pop	{r7, pc}
- 8000604:	08005d98 	.word	0x08005d98
+ 8000604:	08005d94 	.word	0x08005d94
 
 08000608 <Rf96_OCP>:
 // защита по току( максимальный ток усилителя) ( важно ее правильно настроить, поскольку выходная мощность зависит от тока)
@@ -556,7 +556,7 @@ void Rf96_OCP(uint8_t OCP_value)
  8000622:	3708      	adds	r7, #8
  8000624:	46bd      	mov	sp, r7
  8000626:	bd80      	pop	{r7, pc}
- 8000628:	08005d9c 	.word	0x08005d9c
+ 8000628:	08005d98 	.word	0x08005d98
 
 0800062c <Rf96_LNA>:
 // Выбираем LNA  0 - LNA выключен, 1 - Максимальное усиление
@@ -580,7 +580,7 @@ void Rf96_LNA(uint8_t LNA_value)
  8000646:	3708      	adds	r7, #8
  8000648:	46bd      	mov	sp, r7
  800064a:	bd80      	pop	{r7, pc}
- 800064c:	08005da0 	.word	0x08005da0
+ 800064c:	08005d9c 	.word	0x08005d9c
 
 08000650 <Rf96_bandwide_CR_HeadreMod>:
 // Устанавливает несколько параметров: полосу частоты ( signal bandwidth), Coding rate, Мод заголовка (HeaderMod):
@@ -997,7 +997,7 @@ unsigned char Crc8(unsigned char *pcBlock, unsigned char len)
  800087c:	46bd      	mov	sp, r7
  800087e:	f85d 7b04 	ldr.w	r7, [sp], #4
  8000882:	4770      	bx	lr
- 8000884:	08005da4 	.word	0x08005da4
+ 8000884:	08005da0 	.word	0x08005da0
 
 08000888 <transmit>:
 
@@ -1054,7 +1054,7 @@ void transmit(uint8_t str[27])
  80008d6:	f003 030f 	and.w	r3, r3, #15
  80008da:	4a9b      	ldr	r2, [pc, #620]	; (8000b48 <transmit+0x2c0>)
  80008dc:	6013      	str	r3, [r2, #0]
-				sprintf(xvalFirst, " %02d.%d%d ",xIntSumFirst, x5First, x60First);
+				sprintf(xvalFirst, "+%02d.%d%d ",xIntSumFirst, x5First, x60First);
  80008de:	4b97      	ldr	r3, [pc, #604]	; (8000b3c <transmit+0x2b4>)
  80008e0:	681a      	ldr	r2, [r3, #0]
  80008e2:	4b97      	ldr	r3, [pc, #604]	; (8000b40 <transmit+0x2b8>)
@@ -1121,7 +1121,7 @@ void transmit(uint8_t str[27])
  8000950:	f003 030f 	and.w	r3, r3, #15
  8000954:	4a82      	ldr	r2, [pc, #520]	; (8000b60 <transmit+0x2d8>)
  8000956:	6013      	str	r3, [r2, #0]
-				sprintf(yvalFirst, " %02d.%d%d ", yIntSumFirst, y8First, y90First);
+				sprintf(yvalFirst, "+%02d.%d%d ", yIntSumFirst, y8First, y90First);
  8000958:	4b7e      	ldr	r3, [pc, #504]	; (8000b54 <transmit+0x2cc>)
  800095a:	681a      	ldr	r2, [r3, #0]
  800095c:	4b7e      	ldr	r3, [pc, #504]	; (8000b58 <transmit+0x2d0>)
@@ -1189,7 +1189,7 @@ void transmit(uint8_t str[27])
  80009cc:	f003 030f 	and.w	r3, r3, #15
  80009d0:	4a68      	ldr	r2, [pc, #416]	; (8000b74 <transmit+0x2ec>)
  80009d2:	6013      	str	r3, [r2, #0]
-				sprintf(zvalFirst, " %02d.%d%d ", zIntSumFirst, z11First, z120First);
+				sprintf(zvalFirst, "+%02d.%d%d ", zIntSumFirst, z11First, z120First);
  80009d4:	4b64      	ldr	r3, [pc, #400]	; (8000b68 <transmit+0x2e0>)
  80009d6:	681a      	ldr	r2, [r3, #0]
  80009d8:	4b64      	ldr	r3, [pc, #400]	; (8000b6c <transmit+0x2e4>)
@@ -1258,7 +1258,7 @@ void transmit(uint8_t str[27])
  8000a48:	f003 030f 	and.w	r3, r3, #15
  8000a4c:	4a4e      	ldr	r2, [pc, #312]	; (8000b88 <transmit+0x300>)
  8000a4e:	6013      	str	r3, [r2, #0]
-				sprintf(xvalSecond, " %02d.%d%d ",xIntSumSecond, x5Second, x60Second);
+				sprintf(xvalSecond, "+%02d.%d%d ",xIntSumSecond, x5Second, x60Second);
  8000a50:	4b4a      	ldr	r3, [pc, #296]	; (8000b7c <transmit+0x2f4>)
  8000a52:	681a      	ldr	r2, [r3, #0]
  8000a54:	4b4a      	ldr	r3, [pc, #296]	; (8000b80 <transmit+0x2f8>)
@@ -1326,7 +1326,7 @@ void transmit(uint8_t str[27])
  8000ac4:	f003 030f 	and.w	r3, r3, #15
  8000ac8:	4a34      	ldr	r2, [pc, #208]	; (8000b9c <transmit+0x314>)
  8000aca:	6013      	str	r3, [r2, #0]
-				sprintf(yvalSecond, " %02d.%d%d ", yIntSumSecond, y8Second, y90Second);
+				sprintf(yvalSecond, "+%02d.%d%d ", yIntSumSecond, y8Second, y90Second);
  8000acc:	4b30      	ldr	r3, [pc, #192]	; (8000b90 <transmit+0x308>)
  8000ace:	681a      	ldr	r2, [r3, #0]
  8000ad0:	4b30      	ldr	r3, [pc, #192]	; (8000b94 <transmit+0x30c>)
@@ -1424,7 +1424,7 @@ void transmit(uint8_t str[27])
  8000bb6:	f003 030f 	and.w	r3, r3, #15
  8000bba:	4a79      	ldr	r2, [pc, #484]	; (8000da0 <transmit+0x518>)
  8000bbc:	6013      	str	r3, [r2, #0]
-				sprintf(zvalSecond, " %02d.%d%d ", zIntSumSecond, z11Second, z120Second);
+				sprintf(zvalSecond, "+%02d.%d%d ", zIntSumSecond, z11Second, z120Second);
  8000bbe:	4b79      	ldr	r3, [pc, #484]	; (8000da4 <transmit+0x51c>)
  8000bc0:	681a      	ldr	r2, [r3, #0]
  8000bc2:	4b79      	ldr	r3, [pc, #484]	; (8000da8 <transmit+0x520>)
@@ -1493,7 +1493,7 @@ void transmit(uint8_t str[27])
  8000c32:	f003 030f 	and.w	r3, r3, #15
  8000c36:	4a63      	ldr	r2, [pc, #396]	; (8000dc4 <transmit+0x53c>)
  8000c38:	6013      	str	r3, [r2, #0]
-				sprintf(xvalThird, " %02d.%d%d ",xIntSumThird, x5Third, x60Third);
+				sprintf(xvalThird, "+%02d.%d%d ",xIntSumThird, x5Third, x60Third);
  8000c3a:	4b5f      	ldr	r3, [pc, #380]	; (8000db8 <transmit+0x530>)
  8000c3c:	681a      	ldr	r2, [r3, #0]
  8000c3e:	4b5f      	ldr	r3, [pc, #380]	; (8000dbc <transmit+0x534>)
@@ -1561,7 +1561,7 @@ void transmit(uint8_t str[27])
  8000cae:	f003 030f 	and.w	r3, r3, #15
  8000cb2:	4a49      	ldr	r2, [pc, #292]	; (8000dd8 <transmit+0x550>)
  8000cb4:	6013      	str	r3, [r2, #0]
-				sprintf(yvalThird, " %02d.%d%d ", yIntSumThird, y8Third, y90Third);
+				sprintf(yvalThird, "+%02d.%d%d ", yIntSumThird, y8Third, y90Third);
  8000cb6:	4b45      	ldr	r3, [pc, #276]	; (8000dcc <transmit+0x544>)
  8000cb8:	681a      	ldr	r2, [r3, #0]
  8000cba:	4b45      	ldr	r3, [pc, #276]	; (8000dd0 <transmit+0x548>)
@@ -1629,7 +1629,7 @@ void transmit(uint8_t str[27])
  8000d2a:	f003 030f 	and.w	r3, r3, #15
  8000d2e:	4a2f      	ldr	r2, [pc, #188]	; (8000dec <transmit+0x564>)
  8000d30:	6013      	str	r3, [r2, #0]
-				sprintf(zvalThird, " %02d.%d%d ", zIntSumThird, z11Third, z120Third);
+				sprintf(zvalThird, "+%02d.%d%d ", zIntSumThird, z11Third, z120Third);
  8000d32:	4b2b      	ldr	r3, [pc, #172]	; (8000de0 <transmit+0x558>)
  8000d34:	681a      	ldr	r2, [r3, #0]
  8000d36:	4b2b      	ldr	r3, [pc, #172]	; (8000de4 <transmit+0x55c>)
@@ -1655,7 +1655,7 @@ void transmit(uint8_t str[27])
  8000d5c:	701a      	strb	r2, [r3, #0]
 //			}
 //		}
-		sprintf(str1, "%s%s%s %s%s%s %s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
+		sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
  8000d5e:	4b24      	ldr	r3, [pc, #144]	; (8000df0 <transmit+0x568>)
  8000d60:	9306      	str	r3, [sp, #24]
  8000d62:	4b1e      	ldr	r3, [pc, #120]	; (8000ddc <transmit+0x554>)
@@ -1678,8 +1678,8 @@ void transmit(uint8_t str[27])
 	HAL_UART_Abort(&huart2);
  8000d86:	4822      	ldr	r0, [pc, #136]	; (8000e10 <transmit+0x588>)
  8000d88:	f003 fc1a 	bl	80045c0 <HAL_UART_Abort>
-	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 66);
- 8000d8c:	2242      	movs	r2, #66	; 0x42
+	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
+ 8000d8c:	2240      	movs	r2, #64	; 0x40
  8000d8e:	491f      	ldr	r1, [pc, #124]	; (8000e0c <transmit+0x584>)
  8000d90:	481f      	ldr	r0, [pc, #124]	; (8000e10 <transmit+0x588>)
  8000d92:	f003 fbb9 	bl	8004508 <HAL_UART_Transmit_IT>
@@ -3119,35 +3119,20 @@ void USART2_IRQHandler(void)
  800156c:	20000284 	.word	0x20000284
 
 08001570 <_sbrk>:
-/**
- _sbrk
- Increase program data space. Malloc and related functions depend on this
-**/
-caddr_t _sbrk(int incr)
-{
  8001570:	b580      	push	{r7, lr}
  8001572:	b084      	sub	sp, #16
  8001574:	af00      	add	r7, sp, #0
  8001576:	6078      	str	r0, [r7, #4]
-	extern char end asm("end");
-	static char *heap_end;
-	char *prev_heap_end;
-
-	if (heap_end == 0)
  8001578:	4b11      	ldr	r3, [pc, #68]	; (80015c0 <_sbrk+0x50>)
  800157a:	681b      	ldr	r3, [r3, #0]
  800157c:	2b00      	cmp	r3, #0
  800157e:	d102      	bne.n	8001586 <_sbrk+0x16>
-		heap_end = &end;
  8001580:	4b0f      	ldr	r3, [pc, #60]	; (80015c0 <_sbrk+0x50>)
  8001582:	4a10      	ldr	r2, [pc, #64]	; (80015c4 <_sbrk+0x54>)
  8001584:	601a      	str	r2, [r3, #0]
-
-	prev_heap_end = heap_end;
  8001586:	4b0e      	ldr	r3, [pc, #56]	; (80015c0 <_sbrk+0x50>)
  8001588:	681b      	ldr	r3, [r3, #0]
  800158a:	60fb      	str	r3, [r7, #12]
-	if (heap_end + incr > stack_ptr)
  800158c:	4b0c      	ldr	r3, [pc, #48]	; (80015c0 <_sbrk+0x50>)
  800158e:	681a      	ldr	r2, [r3, #0]
  8001590:	687b      	ldr	r3, [r7, #4]
@@ -3155,28 +3140,19 @@ caddr_t _sbrk(int incr)
  8001594:	466a      	mov	r2, sp
  8001596:	4293      	cmp	r3, r2
  8001598:	d907      	bls.n	80015aa <_sbrk+0x3a>
-	{
-		errno = ENOMEM;
  800159a:	f003 ffa1 	bl	80054e0 <__errno>
  800159e:	4602      	mov	r2, r0
  80015a0:	230c      	movs	r3, #12
  80015a2:	6013      	str	r3, [r2, #0]
-		return (caddr_t) -1;
  80015a4:	f04f 33ff 	mov.w	r3, #4294967295	; 0xffffffff
  80015a8:	e006      	b.n	80015b8 <_sbrk+0x48>
-	}
-
-	heap_end += incr;
  80015aa:	4b05      	ldr	r3, [pc, #20]	; (80015c0 <_sbrk+0x50>)
  80015ac:	681a      	ldr	r2, [r3, #0]
  80015ae:	687b      	ldr	r3, [r7, #4]
  80015b0:	4413      	add	r3, r2
  80015b2:	4a03      	ldr	r2, [pc, #12]	; (80015c0 <_sbrk+0x50>)
  80015b4:	6013      	str	r3, [r2, #0]
-
-	return (caddr_t) prev_heap_end;
  80015b6:	68fb      	ldr	r3, [r7, #12]
-}
  80015b8:	4618      	mov	r0, r3
  80015ba:	3710      	adds	r7, #16
  80015bc:	46bd      	mov	sp, r7
@@ -3266,103 +3242,47 @@ void SystemInit(void)
  8001630:	40021000 	.word	0x40021000
 
 08001634 <Reset_Handler>:
-
-    .section	.text.Reset_Handler
-	.weak	Reset_Handler
-	.type	Reset_Handler, %function
-Reset_Handler:
-  ldr   sp, =_estack    /* Set stack pointer */
  8001634:	f8df d034 	ldr.w	sp, [pc, #52]	; 800166c <LoopForever+0x2>
-
-/* Copy the data segment initializers from flash to SRAM */
-  movs	r1, #0
  8001638:	2100      	movs	r1, #0
-  b	LoopCopyDataInit
  800163a:	e003      	b.n	8001644 <LoopCopyDataInit>
 
 0800163c <CopyDataInit>:
-
-CopyDataInit:
-	ldr	r3, =_sidata
  800163c:	4b0c      	ldr	r3, [pc, #48]	; (8001670 <LoopForever+0x6>)
-	ldr	r3, [r3, r1]
  800163e:	585b      	ldr	r3, [r3, r1]
-	str	r3, [r0, r1]
  8001640:	5043      	str	r3, [r0, r1]
-	adds	r1, r1, #4
  8001642:	3104      	adds	r1, #4
 
 08001644 <LoopCopyDataInit>:
-
-LoopCopyDataInit:
-	ldr	r0, =_sdata
  8001644:	480b      	ldr	r0, [pc, #44]	; (8001674 <LoopForever+0xa>)
-	ldr	r3, =_edata
  8001646:	4b0c      	ldr	r3, [pc, #48]	; (8001678 <LoopForever+0xe>)
-	adds	r2, r0, r1
  8001648:	1842      	adds	r2, r0, r1
-	cmp	r2, r3
  800164a:	429a      	cmp	r2, r3
-	bcc	CopyDataInit
  800164c:	d3f6      	bcc.n	800163c <CopyDataInit>
-	ldr	r2, =_sbss
  800164e:	4a0b      	ldr	r2, [pc, #44]	; (800167c <LoopForever+0x12>)
-	b	LoopFillZerobss
  8001650:	e002      	b.n	8001658 <LoopFillZerobss>
 
 08001652 <FillZerobss>:
-/* Zero fill the bss segment. */
-FillZerobss:
-	movs	r3, #0
  8001652:	2300      	movs	r3, #0
-	str	r3, [r2], #4
  8001654:	f842 3b04 	str.w	r3, [r2], #4
 
 08001658 <LoopFillZerobss>:
-
-LoopFillZerobss:
-	ldr	r3, = _ebss
  8001658:	4b09      	ldr	r3, [pc, #36]	; (8001680 <LoopForever+0x16>)
-	cmp	r2, r3
  800165a:	429a      	cmp	r2, r3
-	bcc	FillZerobss
  800165c:	d3f9      	bcc.n	8001652 <FillZerobss>
-
-/* Call the clock system intitialization function.*/
-    bl  SystemInit
  800165e:	f7ff ffb3 	bl	80015c8 <SystemInit>
-/* Call static constructors */
-    bl __libc_init_array
  8001662:	f003 ff43 	bl	80054ec <__libc_init_array>
-/* Call the application's entry point.*/
-	bl	main
  8001666:	f7ff fbd5 	bl	8000e14 <main>
 
 0800166a <LoopForever>:
-
-LoopForever:
-    b LoopForever
  800166a:	e7fe      	b.n	800166a <LoopForever>
-  ldr   sp, =_estack    /* Set stack pointer */
  800166c:	20018000 	.word	0x20018000
-	ldr	r3, =_sidata
- 8001670:	08005f30 	.word	0x08005f30
-	ldr	r0, =_sdata
+ 8001670:	08005f2c 	.word	0x08005f2c
  8001674:	20000000 	.word	0x20000000
-	ldr	r3, =_edata
  8001678:	20000070 	.word	0x20000070
-	ldr	r2, =_sbss
  800167c:	20000070 	.word	0x20000070
-	ldr	r3, = _ebss
  8001680:	20000324 	.word	0x20000324
 
 08001684 <ADC1_2_IRQHandler>:
- * @retval : None
-*/
-    .section	.text.Default_Handler,"ax",%progbits
-Default_Handler:
-Infinite_Loop:
-	b	Infinite_Loop
  8001684:	e7fe      	b.n	8001684 <ADC1_2_IRQHandler>
 	...
 
@@ -5864,7 +5784,7 @@ HAL_StatusTypeDef HAL_RCC_OscConfig(RCC_OscInitTypeDef  *RCC_OscInitStruct)
  800248c:	e011      	b.n	80024b2 <HAL_RCC_OscConfig+0x2ba>
  800248e:	bf00      	nop
  8002490:	40021000 	.word	0x40021000
- 8002494:	08005ea4 	.word	0x08005ea4
+ 8002494:	08005ea0 	.word	0x08005ea0
  8002498:	20000000 	.word	0x20000000
  800249c:	20000004 	.word	0x20000004
         {
@@ -7122,7 +7042,7 @@ HAL_StatusTypeDef HAL_RCC_ClockConfig(RCC_ClkInitTypeDef  *RCC_ClkInitStruct, ui
  8002b72:	bf00      	nop
  8002b74:	40022000 	.word	0x40022000
  8002b78:	40021000 	.word	0x40021000
- 8002b7c:	08005ea4 	.word	0x08005ea4
+ 8002b7c:	08005ea0 	.word	0x08005ea0
  8002b80:	20000000 	.word	0x20000000
  8002b84:	20000004 	.word	0x20000004
 
@@ -7325,7 +7245,7 @@ uint32_t HAL_RCC_GetSysClockFreq(void)
  8002c86:	f85d 7b04 	ldr.w	r7, [sp], #4
  8002c8a:	4770      	bx	lr
  8002c8c:	40021000 	.word	0x40021000
- 8002c90:	08005ebc 	.word	0x08005ebc
+ 8002c90:	08005eb8 	.word	0x08005eb8
  8002c94:	00f42400 	.word	0x00f42400
  8002c98:	007a1200 	.word	0x007a1200
 
@@ -7374,7 +7294,7 @@ uint32_t HAL_RCC_GetPCLK1Freq(void)
  8002cd4:	4618      	mov	r0, r3
  8002cd6:	bd80      	pop	{r7, pc}
  8002cd8:	40021000 	.word	0x40021000
- 8002cdc:	08005eb4 	.word	0x08005eb4
+ 8002cdc:	08005eb0 	.word	0x08005eb0
 
 08002ce0 <HAL_RCC_GetPCLK2Freq>:
   * @note   Each time PCLK2 changes, this function must be called to update the
@@ -7401,7 +7321,7 @@ uint32_t HAL_RCC_GetPCLK2Freq(void)
  8002d00:	4618      	mov	r0, r3
  8002d02:	bd80      	pop	{r7, pc}
  8002d04:	40021000 	.word	0x40021000
- 8002d08:	08005eb4 	.word	0x08005eb4
+ 8002d08:	08005eb0 	.word	0x08005eb0
 
 08002d0c <RCC_SetFlashLatencyFromMSIRange>:
             voltage range.
@@ -14472,10 +14392,10 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800551e:	4798      	blx	r3
  8005520:	3501      	adds	r5, #1
  8005522:	e7f2      	b.n	800550a <__libc_init_array+0x1e>
- 8005524:	08005f28 	.word	0x08005f28
- 8005528:	08005f28 	.word	0x08005f28
- 800552c:	08005f28 	.word	0x08005f28
- 8005530:	08005f2c 	.word	0x08005f2c
+ 8005524:	08005f24 	.word	0x08005f24
+ 8005528:	08005f24 	.word	0x08005f24
+ 800552c:	08005f24 	.word	0x08005f24
+ 8005530:	08005f28 	.word	0x08005f28
 
 08005534 <memset>:
  8005534:	4402      	add	r2, r0
@@ -14793,9 +14713,9 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  800580c:	f000 f882 	bl	8005914 <_printf_i>
  8005810:	e7ea      	b.n	80057e8 <_svfiprintf_r+0x1b0>
  8005812:	bf00      	nop
- 8005814:	08005eec 	.word	0x08005eec
- 8005818:	08005ef2 	.word	0x08005ef2
- 800581c:	08005ef6 	.word	0x08005ef6
+ 8005814:	08005ee8 	.word	0x08005ee8
+ 8005818:	08005eee 	.word	0x08005eee
+ 800581c:	08005ef2 	.word	0x08005ef2
  8005820:	00000000 	.word	0x00000000
  8005824:	08005585 	.word	0x08005585
 
@@ -15131,8 +15051,8 @@ __weak void HAL_UARTEx_WakeupCallback(UART_HandleTypeDef *huart)
  8005b26:	f884 3042 	strb.w	r3, [r4, #66]	; 0x42
  8005b2a:	f104 0542 	add.w	r5, r4, #66	; 0x42
  8005b2e:	e76c      	b.n	8005a0a <_printf_i+0xf6>
- 8005b30:	08005efd 	.word	0x08005efd
- 8005b34:	08005f0e 	.word	0x08005f0e
+ 8005b30:	08005ef9 	.word	0x08005ef9
+ 8005b34:	08005f0a 	.word	0x08005f0a
 
 08005b38 <memcpy>:
  8005b38:	b510      	push	{r4, lr}

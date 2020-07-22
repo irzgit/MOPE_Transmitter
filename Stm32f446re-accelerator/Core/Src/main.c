@@ -486,7 +486,7 @@ int main(void)
 
 
 	  BYTE readBuf[30];
-	  /*
+/*
 	  //Mount drive
 	  fres = f_mount(&FatFs, "", 1); //1=mount now
 	  if (fres != FR_OK) {
@@ -514,9 +514,9 @@ int main(void)
 
 	  //De-mount drive
 	  f_mount(NULL, "", 0);
-
-
 */
+
+
 
 
 		HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
@@ -537,8 +537,7 @@ int main(void)
 
 		PacketToRadio();
 
-//if (kolZapis == 0)
-//{
+
 
 
 
@@ -570,7 +569,7 @@ int main(void)
 			while(1);
 	 //   myprintf("f_open error (%i)\r\n", fres);
 	  }
-//}
+
 
 	  UINT bytesWrote;
 /////////////////////////////////////////////////////////////////////////
@@ -659,32 +658,72 @@ int main(void)
 
 			  SD_Buff[72]='\n';
 
-			  HAL_UART_Transmit_IT(&huart2, (uint8_t*)SD_Buff, 73);
+			 fres = f_write(&fil, &SD_Buff, sizeof(SD_Buff), &bytesWrote);
+
+					  //fres = f_write(&fil, byte, sizeof(byte), &bytesWrote);
+					  if(fres == FR_OK) {
+					  //  myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
+					  } else {
+
+					 //   myprintf("f_write error (%i)\r\n");
+					  }
+					  kolZapis++;
+					  if(kolZapis==1000)
+					  {
+						  kolZapis=0;
+						 fres= f_sync(&fil);
+						 if(fres!=FR_OK)
+						 {
+							 while(1);
+						 }
+					  }
 
 
-	  fres = f_write(&fil, &SD_Buff, sizeof(SD_Buff), &bytesWrote);
+
+			  HAL_UART_Transmit_IT(&huart2, "\n", 1);
+
+/*
+			  if(kolZapis==0){
+			    fres = f_mount(&FatFs, "", 1); //1=mount now
+
+
+				  if (fres != FR_OK) {
+				   // myprintf("f_mount error (%i)\r\n", fres);
+
+					//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+					while(1);
+				  }
 
 
 
-			  //fres = f_write(&fil, byte, sizeof(byte), &bytesWrote);
+			  //fres = f_open(&fil, "write.txt", FA_OPEN_APPEND | FA_WRITE);
+
+
+				  fres = f_open(&fil, "write.txt", FA_OPEN_APPEND | FA_WRITE);
+
 			  if(fres == FR_OK) {
-			  //  myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
+			 //   myprintf("I was able to open 'write.txt' for writing\r\n");
 			  } else {
-
-			 //   myprintf("f_write error (%i)\r\n");
+				  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+					while(1);
+			 //   myprintf("f_open error (%i)\r\n", fres);
 			  }
 
+		}
+*/
 
-			 // kolZapis++;
+
+/*
+			  kolZapis++;
 			  if (kolZapis == 1000)
 			  {
 
 			  //Close file, don't forget this!
-				//   f_close(&fil);
+				  f_close(&fil);
 
 				   //De-mount drive
-				//  f_mount(NULL, "", 0);
-			  	 // kolZapis = 0;
+				 f_mount(NULL, "", 0);
+			  	  kolZapis = 0;
 
 
 			  } else
@@ -692,7 +731,7 @@ int main(void)
 
 
 			  }
-
+*/
 
 			//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
 			//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_13, GPIO_PIN_SET);

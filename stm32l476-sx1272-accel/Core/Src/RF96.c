@@ -138,9 +138,9 @@ void Rf96_Preamble(uint16_t PreambLen_value)
 	SPIWrite(LR_RegPreambleLsb,(uint8_t)PreambLen_value);
 }
 // Настройка вывода Di0 0 - прерывание по приему, 1 - прерывание по передаче, Di1 0- прерывание по таймауту
-void Rf96_PinOut_Di0_Di1(uint8_t Di0_value, uint8_t Di1_value)
+void Rf96_PinOut_Di0_Di1_Di2_Di3(uint8_t Di0_value, uint8_t Di1_value,uint8_t Di2_value ,uint8_t Di3_value)
 {
-	SPIWrite(REG_LR_DIOMAPPING1,(Di0_value<<6)+(Di1_value<<4));
+	SPIWrite(REG_LR_DIOMAPPING1,(Di0_value<<6)+(Di1_value<<4)+ (Di2_value<<2)+(Di3_value));
 }
 //Снятие маски с прерывания по TX
 void Rf96_irqMaskTX(void)
@@ -150,7 +150,8 @@ void Rf96_irqMaskTX(void)
 //Снятие маски с прерывания по RX
 void Rf96_irqMaskRX(void)
 {
-	SPIWrite(LR_RegIrqFlagsMask,0x3F);
+	//SPIWrite(LR_RegIrqFlagsMask,0x3F); // Без CRC
+	SPIWrite(LR_RegIrqFlagsMask,0x1F); //с CRC
 }
 //Установка числа передаваемых данных (в байтах)
 void Rf96_PayloadLength(uint8_t LengthBytes_value)
@@ -259,7 +260,7 @@ void Rf96_Lora_TX_mode(void)
 {
 	//RAK811antTx();
 	  // Настройка вывода Di0 на прерывание по отправке
-	Rf96_PinOut_Di0_Di1(1,0);
+	Rf96_PinOut_Di0_Di1_Di2_Di3(1,0,0,2);
       // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Снимаем маску с прерывания по TX
@@ -280,7 +281,7 @@ void Rf96_Lora_RX_mode(void)
 	  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
 
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту
-	  Rf96_PinOut_Di0_Di1(0,0);
+	  Rf96_PinOut_Di0_Di1_Di2_Di3(0,0,0,2);
 	  // Снимаем маску с прерывания по RX
 	  Rf96_irqMaskRX();
 	  // Сброс всех флагов

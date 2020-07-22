@@ -24,7 +24,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include <string.h>
+#include <stdarg.h>
+#include "sdcard.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -97,6 +99,12 @@ uint8_t error[18] = {"Accel data error\n"};
 uint8_t byte[1] = {"\n"};
 uint8_t Txcomplite=0;
 
+
+//SD карта
+uint32_t blocksNum;
+uint32_t blockAddr = 0;
+uint8_t block[512];
+/////////
 
 
 
@@ -486,35 +494,65 @@ int main(void)
 
 
 	  BYTE readBuf[30];
-/*
-	  //Mount drive
-	  fres = f_mount(&FatFs, "", 1); //1=mount now
-	  if (fres != FR_OK) {
-	   // myprintf("f_mount error (%i)\r\n", fres);
-	    while(1);
-	  }
-	  fres = f_open(&fil, "write.txt", FA_OPEN_APPEND | FA_WRITE);
-	  if(fres == FR_OK) {
-	 //   myprintf("I was able to open 'write.txt' for writing\r\n");
-	  } else {
-	 //   myprintf("f_open error (%i)\r\n", fres);
-	  }
 
-	  strncpy((char*)readBuf, "a new file is hoba!", 19);
-	  UINT bytesWrote;
-	  fres = f_write(&fil, readBuf, 19, &bytesWrote);
-	  if(fres == FR_OK) {
-	  //  myprintf("Wrote %i bytes to 'write.txt'!\r\n", bytesWrote);
-	  } else {
-	 //   myprintf("f_write error (%i)\r\n");
-	  }
 
-	  //Close file, don't forget this!
-	  f_close(&fil);
+	  ///////////////////////////////
+	  int code;
+	    code = SDCARD_Init();
 
-	  //De-mount drive
-	  f_mount(NULL, "", 0);
+
+	  code = SDCARD_GetBlocksNumber(&blocksNum);
+
+
+
+	    // Запись одного блока
+	   // code = SDCARD_WriteSingleBlock(blockAddr, block);
+	  ////////////////////////////////
+
+	    // Чтение одного блока
+	    //code = SDCARD_ReadSingleBlock(blockAddr, block);
+
+	    /*
+	       startBlockAddr=0;
+	       blockAddr = startBlockAddr + 1;
+	       for(uint16_t i=0;i<512;i++)
+	       {
+	    	   block[i]='1';
+	       }
+
+           code = SDCARD_ReadBegin(blockAddr);
+	                   for(int i = 0; i < 3; i++) {
+	                           code = SDCARD_ReadData(block);
+	                   }
+	                           code = SDCARD_ReadEnd();
+
+
+	       code = SDCARD_WriteBegin(blockAddr);
+
+
+	       for(int i = 0; i < 3; i++)
+	       {
+	               //snprintf((char*)block, sizeof(block), "0x%08X", (int)blockAddr);
+	               code = SDCARD_WriteData(block);
+	       }
+
+	               code = SDCARD_WriteEnd();
+
+
+	               blockAddr = startBlockAddr + 1;
+
+
+	                   code = SDCARD_ReadBegin(blockAddr);
+	                   for(int i = 0; i < 3; i++) {
+	                           code = SDCARD_ReadData(block);
+	                   }
+	                           code = SDCARD_ReadEnd();
+
 */
+
+
+
+
 
 
 
@@ -543,7 +581,7 @@ int main(void)
 
 		////////////////ФЛЕШКА
 
-
+/*
 
 	    fres = f_mount(&FatFs, "", 1); //1=mount now
 
@@ -570,7 +608,7 @@ int main(void)
 	 //   myprintf("f_open error (%i)\r\n", fres);
 	  }
 
-
+*/
 	  UINT bytesWrote;
 /////////////////////////////////////////////////////////////////////////
 
@@ -658,6 +696,31 @@ int main(void)
 
 			  SD_Buff[72]='\n';
 
+
+			  if(kolZapis==7)
+			  {
+				  kolZapis=0;
+				  block[510]=';';
+				  block[511]='\n';
+				  code = SDCARD_WriteSingleBlock(blockAddr++, block);
+				  memset(block, 0, sizeof(block));
+
+			  }
+			  else
+			  {
+				  uint8_t j=0;
+                  for(uint16_t i=73*kolZapis;i<73+kolZapis*73;i++)
+                  {
+                	  block[i]=SD_Buff[j++];
+                  }
+                  kolZapis++;
+
+			  }
+
+
+
+
+			  /*
 			 fres = f_write(&fil, &SD_Buff, sizeof(SD_Buff), &bytesWrote);
 
 					  //fres = f_write(&fil, byte, sizeof(byte), &bytesWrote);
@@ -667,15 +730,20 @@ int main(void)
 
 					 //   myprintf("f_write error (%i)\r\n");
 					  }
-					  kolZapis++;
+
+					  */
+
+
 					  if(kolZapis==1000)
 					  {
-						  kolZapis=0;
+						//  kolZapis=0;
+						  /*
 						 fres= f_sync(&fil);
 						 if(fres!=FR_OK)
 						 {
 							 while(1);
 						 }
+						 */
 					  }
 
 

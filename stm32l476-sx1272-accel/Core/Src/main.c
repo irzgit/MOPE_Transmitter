@@ -324,16 +324,26 @@ int main(void)
 	  	 	    //  Rf96_LoRaRxPacket((char*)TX_RX_Radio);
 	  	 	   Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
 	  	 	   Rf96_LoRaClearIrq();
+	  	 	  if(Get_NIRQ_Di3()) // Если CRC не совпадает
+	  	 		{
+
+
+
+	  	 		}
+	  	 	  else              // CRC совпало
+	  	 	  {
+	  	 		transmit(TX_RX_Radio);
+	  	 	  }
 
 	  	 	//TX_RX_Radio[28]='\n';
 
 	  	 	//str1[0]='1';
 	  	 	//str1[1]='\n';
 	  	 //	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 2);
-            if(Crc8(TX_RX_Radio,27)==TX_RX_Radio[27])
-            {
-            	transmit(TX_RX_Radio);
-            }
+          // if(Crc8(TX_RX_Radio,27)==TX_RX_Radio[27])
+          //  {
+          //  	transmit(TX_RX_Radio);
+          //  }
 
 
 

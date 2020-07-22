@@ -207,7 +207,7 @@ void PacketToRadio(void)
 		for(uint8_t i=0;i<27;i++)
 		   RadioBuff[i+j*9]=packageCut[j][i];
 	}
-	RadioBuff[27]=Crc8(RadioBuff,27);
+	//RadioBuff[27]=Crc8(RadioBuff,27);
 	  // Установка адреса TX в буфере FIFO
 	  Rf96_TX_FifoAdr(0x80);
 	  // Устанавливает указатель на адрес начала массива TX в FIFO
@@ -215,7 +215,7 @@ void PacketToRadio(void)
 
 	  Rf96_LoRaClearIrq();
 
-	  Rf96_LoRaTxPacket((char*)RadioBuff,28);
+	  Rf96_LoRaTxPacket((char*)RadioBuff,27);
 	//  srtAll[0]='1';
 	//  srtAll[1]='\n';
 	//  HAL_UART_Transmit_IT(&huart2, srtAll,2);

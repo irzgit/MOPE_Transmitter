@@ -8,6 +8,8 @@
 
 #define Get_NIRQ_Di0()					HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_10)//
 #define Get_NIRQ_Di1()                  HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3)
+#define Get_NIRQ_Di2()					HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5)//
+#define Get_NIRQ_Di3()                  HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)
 // Регистры RF96
 /********************Lroa mode***************************/
 #define LR_RegFifo                                  0x00

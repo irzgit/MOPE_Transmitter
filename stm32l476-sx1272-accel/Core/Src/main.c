@@ -323,7 +323,7 @@ int main(void)
 	  	 	 {
 	  	 	    //  Rf96_LoRaRxPacket((char*)TX_RX_Radio);
 	  	 	   Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
-	  	 	   Rf96_LoRaClearIrq();
+
 	  	 	  if(Get_NIRQ_Di3()) // Если CRC не совпадает
 	  	 		{
 
@@ -334,6 +334,7 @@ int main(void)
 	  	 	  {
 	  	 		transmit(TX_RX_Radio);
 	  	 	  }
+	  	 	Rf96_LoRaClearIrq();
 
 	  	 	//TX_RX_Radio[28]='\n';
 

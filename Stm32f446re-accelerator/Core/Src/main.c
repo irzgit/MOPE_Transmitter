@@ -71,7 +71,7 @@ static void MX_USART1_UART_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_UART5_Init(void);
 /* USER CODE BEGIN PFP */
-
+#define PacketSize 28
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -85,10 +85,10 @@ FRESULT fres;
 ///
 
 
-uint8_t str[511] = {0};
+///uint8_t str[PacketSize*73] = {0};
 
-uint8_t package[3][14] = {0};
-uint8_t packageCut[3][9] = {0};
+uint8_t package[3][14*PacketSize] = {0};
+uint8_t packageCut[3][9*PacketSize] = {0};
 
 uint8_t Txcomplite=0;
 
@@ -121,7 +121,7 @@ char xvalSecond[7], yvalSecond[7], zvalSecond[7];
 int xIntSumThird, yIntSumThird, zIntSumThird;
 int x5Third, x60Third, x65Third, y8Third, y90Third, y95Third, z11Third, z120Third, z125Third;
 //char xval[3][7], yval[3][7], zval[3][7], str1[3][16];
-char xvalThird[7], yvalThird[7], zvalThird[7], str1[512];
+char xvalThird[7], yvalThird[7], zvalThird[7], str1[PacketSize*73];
 
 // Для синхронизации с датчиками
 uint8_t readFlag;
@@ -136,9 +136,10 @@ uint32_t reciveTime;
 // Буффер записи на SD карту
 uint8_t SD_Buff[74];
 // Буффер посредник
-uint8_t Buff_Mid[252];
+uint8_t Buff_Mid[36*PacketSize];
 // Буфер передачи по радио
 uint8_t RadioBuff[28];
+uint8_t ToSD[PacketSize*73];
 
 
 uint8_t metka=0;
@@ -155,9 +156,10 @@ void PacketToRadio(void)
 
 	for(uint8_t j=0;j<3;j++)
 	{
-		for(uint8_t i=0;i<27;i++)
+		for(uint8_t i=0;i<9;i++)
 		   RadioBuff[i+j*9]=packageCut[j][i];
 	}
+
 	//RadioBuff[27]=Crc8(RadioBuff,27);
 	  // Установка адреса TX в буфере FIFO
 	  Rf96_TX_FifoAdr(0x80);
@@ -254,7 +256,7 @@ void transmit(uint8_t* str)
 				// первый акселерометр
 				// Ось Х
 
-	for(uint8_t i=0;i<7;i++)
+	for(uint8_t i=0;i<PacketSize;i++)
 	{
 				xIntSumFirst = (str[1+8+i*36] & 0x0F) * 10 + (str[1+9+i*36] >> 4); // целочисленная сумма X
 				//xSum = (str[5] & 0x0F) * 100 + (str[6] >> 4) * 10 + (str[6] & 0x0F);//цифры после запятой Х
@@ -426,7 +428,7 @@ void SyncAccel(void)
 	  	readFlag=0;
 	  	HAL_Delay(1);
 	  	HAL_UART_Abort(&huart3);
-	  	HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
+	  	HAL_UART_Receive_DMA(&huart3, &package[0][0], 14*PacketSize);
 	  }
 	  if(readFlag2==1)
 	  {
@@ -434,7 +436,7 @@ void SyncAccel(void)
 	  	readFlag2=0;
 	  	HAL_Delay(1);
 	  	HAL_UART_Abort(&huart1);
-	  	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
+	  	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14*PacketSize);
 	  }
 	  if(readFlag3==1)
 	  {
@@ -442,7 +444,7 @@ void SyncAccel(void)
 	  	readFlag3=0;
 	  	HAL_Delay(1);
 	  	HAL_UART_Abort(&huart5);
-	  	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
+	  	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14*PacketSize);
 	  }
 
 
@@ -497,11 +499,11 @@ int main(void)
 
 
 	  ///////////////////////////////
-	  int code;
-	    code = SDCARD_Init();
+	  //int code;
+	  //code = SDCARD_Init();
 
 
-	  code = SDCARD_GetBlocksNumber(&blocksNum);
+	 // code = SDCARD_GetBlocksNumber(&blocksNum);
 
 
 
@@ -552,9 +554,9 @@ int main(void)
 
 
 
-		HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
-		HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
-		HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
+		HAL_UART_Receive_DMA(&huart3, &package[0][0], 14*PacketSize);
+		HAL_UART_Receive_DMA(&huart5, &package[1][0], 14*PacketSize);
+		HAL_UART_Receive_DMA(&huart1, &package[2][0], 14*PacketSize);
 
 
 	//  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_1, GPIO_PIN_SET);
@@ -576,7 +578,7 @@ int main(void)
 
 		////////////////ФЛЕШКА
 
-/*
+
 
 	    fres = f_mount(&FatFs, "", 1); //1=mount now
 
@@ -603,7 +605,7 @@ int main(void)
 	 //   myprintf("f_open error (%i)\r\n", fres);
 	  }
 
-*/
+
 	  UINT bytesWrote;
 /////////////////////////////////////////////////////////////////////////
 
@@ -648,19 +650,16 @@ int main(void)
 			// парсер  Buff_Mid
 
 			metka=0;
-			transmit(Buff_Mid);
+		//	transmit(Buff_Mid);
 
 
 
+		//	str1[510]=';';
+		//	str1[511]='\n';
 
-
-
-
-			str1[510]=';';
-			str1[511]='\n';
 			// Запись на SD
-			  code = SDCARD_WriteSingleBlock(blockAddr++, str1);
-			  memset(block, 0, sizeof(block));
+			 // code = SDCARD_WriteSingleBlock(blockAddr++, str1);
+			//  memset(block, 0, sizeof(block));
 
 
 			  //fres = f_write(&fil, packageCut, 27, &bytesWrote);
@@ -714,8 +713,7 @@ int main(void)
 */
 
 
-			  /*
-			 fres = f_write(&fil, &SD_Buff, sizeof(SD_Buff), &bytesWrote);
+			          fres = f_write(&fil, &str1, sizeof(str1), &bytesWrote);
 
 					  //fres = f_write(&fil, byte, sizeof(byte), &bytesWrote);
 					  if(fres == FR_OK) {
@@ -725,21 +723,27 @@ int main(void)
 					 //   myprintf("f_write error (%i)\r\n");
 					  }
 
-					  */
+					  fres= f_sync(&fil);
 
+					//  HAL_UART_Transmit_IT(&huart2, "\n", 1);
+/*
 
-					  if(kolZapis==1000)
+					  kolZapis++;
+
+					  if(kolZapis==5)
 					  {
-						//  kolZapis=0;
-						  /*
-						 fres= f_sync(&fil);
+
+
+						  kolZapis=0;
+
+
 						 if(fres!=FR_OK)
 						 {
 							 while(1);
 						 }
-						 */
-					  }
 
+					  }
+*/
 
 
 			 // HAL_UART_Transmit_IT(&huart2, "\n", 1);
@@ -1191,7 +1195,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 if(huart==&huart3)
 {
 
-if(package[0][0]!=0x68)
+if(package[0][0]!=0x68 && package[0][14]!=0x68)
 {
 	readFlag=1;
 	UsartCount=0;
@@ -1199,10 +1203,19 @@ if(package[0][0]!=0x68)
 
 }else
 {
+	for(uint8_t j=0;j<PacketSize;j++)
+	{
 	for(uint8_t i=0;i<9;i++)
+	{
+		packageCut[0][i+j*9]=package[0][i+4+j*14];
+	}
+	}
+	/*
+	for(uint8_t i=0;i<9*20;i++)
 	{
 		packageCut[0][i]=package[0][i+4];
 	}
+	*/
 	UsartCount++;
 
 }
@@ -1210,7 +1223,7 @@ if(package[0][0]!=0x68)
 if(huart==&huart1)
 {
 
-	if(package[2][0]!=0x68)
+	if(package[2][0]!=0x68 && package[2][14]!=0x68)
 	{
 		readFlag2=1;
 		//HAL_UART_Abort(&huart3);
@@ -1218,10 +1231,20 @@ if(huart==&huart1)
 
 	}else
 	{
+
+		for(uint8_t j=0;j<PacketSize;j++)
+		{
 		for(uint8_t i=0;i<9;i++)
+		{
+			packageCut[2][i+j*9]=package[2][i+4+j*14];
+		}
+		}
+		/*
+		for(uint8_t i=0;i<9*20;i++)
 		{
 			packageCut[2][i]=package[2][i+4];
 		}
+		*/
 		UsartCount++;
 	}
 
@@ -1230,7 +1253,7 @@ if(huart==&huart1)
 if(huart==&huart5)
 {
 
-	if(package[1][0]!=0x68)
+	if(package[1][0]!=0x68 && package[1][14]!=0x68)
 	{
 		readFlag3=1;
 		UsartCount=0;
@@ -1238,10 +1261,19 @@ if(huart==&huart5)
 
 	}else
 	{
+		for(uint8_t j=0;j<PacketSize;j++)
+		{
 		for(uint8_t i=0;i<9;i++)
+		{
+			packageCut[1][i+j*9]=package[1][i+4+j*14];
+		}
+		}
+		/*
+		for(uint8_t i=0;i<9*20;i++)
 		{
 			packageCut[1][i]=package[1][i+4];
 		}
+		*/
 		UsartCount++;
 
 	}
@@ -1253,31 +1285,38 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 
 
 
-
-
 	reciveTime = HAL_GetTick();
-	uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
-	for(uint8_t i=0;i<9;i++)
+	for(uint8_t i=0, j=PacketSize;i<PacketSize;i++, j--)
 	{
-		Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
-
+		uint32_TO_charmass(reciveTime-j, Buff_Mid, i*36, 8);
 	}
 
+	for(uint8_t j=0;j<PacketSize;j++)
+	{
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+9+j*36]=packageCut[0][i+j*9];
 
-	CountOfAccel++;
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+18+j*36]=packageCut[1][i+j*9];
 
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+27+j*36]=packageCut[2][i+j*9];
 
-	if(CountOfAccel==7)  // Считано 7 измерений с каждого датчика
+		}
+
+	}
+
+	metka=1;
+
+	//CountOfAccel++;
+
+/*
+	if(CountOfAccel==PacketSize)  // Считано 7 измерений с каждого датчика
 	{
 		CountOfAccel=0;
 		metka=1;
@@ -1292,7 +1331,7 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 		{
 
 		}
-
+*/
 
 
 /*

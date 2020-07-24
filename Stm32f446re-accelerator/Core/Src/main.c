@@ -650,7 +650,7 @@ int main(void)
 			// парсер  Buff_Mid
 
 			metka=0;
-		//	transmit(Buff_Mid);
+			transmit(Buff_Mid);
 
 
 
@@ -1187,6 +1187,74 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+
+void HAL_UART_RxHalfCpltCallback(UART_HandleTypeDef *huart)
+{
+	if(huart==&huart3)
+	{
+		if(package[0][0]!=0x68 && package[0][14]!=0x68)
+		{
+			readFlag=1;
+			UsartCount=0;
+
+		}else
+		{
+			for(uint8_t j=0;j<PacketSize/2;j++)
+			{
+			for(uint8_t i=0;i<9;i++)
+			{
+				packageCut[0][i+j*9]=package[0][i+4+j*14];
+			}
+			}
+			//UsartCount++;
+
+		}
+	}
+	if(huart==&huart1)
+	{
+		if(package[2][0]!=0x68 && package[2][14]!=0x68)
+			{
+				readFlag2=1;
+				UsartCount=0;
+
+			}else
+			{
+
+				for(uint8_t j=0;j<PacketSize/2;j++)
+				{
+				for(uint8_t i=0;i<9;i++)
+				{
+					packageCut[2][i+j*9]=package[2][i+4+j*14];
+				}
+				}
+
+				//UsartCount++;
+			}
+	}
+	if(huart==&huart5)
+	{
+		if(package[1][0]!=0x68 && package[1][14]!=0x68)
+			{
+				readFlag3=1;
+				UsartCount=0;
+
+			}else
+			{
+				for(uint8_t j=0;j<PacketSize/2;j++)
+				{
+				for(uint8_t i=0;i<9;i++)
+				{
+					packageCut[1][i+j*9]=package[1][i+4+j*14];
+				}
+				}
+				//UsartCount++;
+			}
+	}
+}
+
+
+
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
@@ -1203,7 +1271,7 @@ if(package[0][0]!=0x68 && package[0][14]!=0x68)
 
 }else
 {
-	for(uint8_t j=0;j<PacketSize;j++)
+	for(uint8_t j=PacketSize/2;j<PacketSize;j++)
 	{
 	for(uint8_t i=0;i<9;i++)
 	{
@@ -1232,7 +1300,7 @@ if(huart==&huart1)
 	}else
 	{
 
-		for(uint8_t j=0;j<PacketSize;j++)
+		for(uint8_t j=PacketSize/2;j<PacketSize;j++)
 		{
 		for(uint8_t i=0;i<9;i++)
 		{
@@ -1261,7 +1329,7 @@ if(huart==&huart5)
 
 	}else
 	{
-		for(uint8_t j=0;j<PacketSize;j++)
+		for(uint8_t j=PacketSize/2;j<PacketSize;j++)
 		{
 		for(uint8_t i=0;i<9;i++)
 		{

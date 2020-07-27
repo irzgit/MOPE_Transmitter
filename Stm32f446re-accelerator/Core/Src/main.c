@@ -414,6 +414,7 @@ int main(void)
 			PacketToRadio();
 		}
 
+		// Запись на SD карту
 		if(metka==1)
 		{
 			//HAL_UART_Transmit_IT(&huart2, "\n", 1);

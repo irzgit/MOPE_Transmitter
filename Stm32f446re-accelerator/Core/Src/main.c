@@ -47,6 +47,10 @@
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
+TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim10;
+
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -70,6 +74,9 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_UART5_Init(void);
+static void MX_TIM6_Init(void);
+static void MX_TIM7_Init(void);
+static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
 
 #define NumofPacket 7
@@ -137,7 +144,7 @@ uint8_t z=0;
 // 3 - акселерометр с адресом 150
 uint8_t accelSelect[3][5] = {{0x68, 0x04, 0x32, 0x04, 0x3a},{0x68, 0x04, 0x64, 0x04, 0x6c},{0x68, 0x04, 0x96, 0x04, 0x9e}};
 
-
+uint32_t countT=0;
 
 void PacketToRadio(void)
 {
@@ -378,6 +385,9 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI3_Init();
   MX_UART5_Init();
+  MX_TIM6_Init();
+  MX_TIM7_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 
 
@@ -411,9 +421,15 @@ int main(void)
     } else {
 		while(1);
     }
+    HAL_TIM_Base_Start_IT(&htim6);
+    HAL_TIM_Base_Start_IT(&htim7);
+    HAL_TIM_Base_Start_IT(&htim10);
 
-
-
+    /*
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+    */
 /////////////////////////////////////////////////////////////////////////
 
   /* USER CODE END 2 */
@@ -422,6 +438,8 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+
 
 	  // Синхронизация
 	    SyncAccel();
@@ -486,6 +504,8 @@ int main(void)
 				 fres= f_sync(&fil);
 
 			}
+
+
 
 
 		}
@@ -621,6 +641,113 @@ static void MX_SPI3_Init(void)
   /* USER CODE BEGIN SPI3_Init 2 */
 
   /* USER CODE END SPI3_Init 2 */
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 9000-1;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 1000;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+  * @brief TIM7 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM7_Init(void)
+{
+
+  /* USER CODE BEGIN TIM7_Init 0 */
+
+  /* USER CODE END TIM7_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM7_Init 1 */
+
+  /* USER CODE END TIM7_Init 1 */
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 9000-1;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 1000;
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM7_Init 2 */
+
+  /* USER CODE END TIM7_Init 2 */
+
+}
+
+/**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 9000-1;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 1000;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
 
 }
 
@@ -868,9 +995,12 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 
+
 if(huart==&huart3)
 {
-
+	HAL_TIM_Base_Stop_IT(&htim6);
+	TIM6->CNT=0;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 if(package[0][0]!=0x68)
 {
 	readFlag=1;
@@ -885,10 +1015,13 @@ if(package[0][0]!=0x68)
 	UsartCount++;
 
 }
+HAL_TIM_Base_Start_IT(&htim6);
 }
 if(huart==&huart1)
 {
-
+	HAL_TIM_Base_Stop_IT(&htim7);
+	TIM7->CNT=0;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 	if(package[2][0]!=0x68)
 	{
 		readFlag2=1;
@@ -902,12 +1035,15 @@ if(huart==&huart1)
 		}
 		UsartCount++;
 	}
+	HAL_TIM_Base_Start_IT(&htim7);
 
 }
 
 if(huart==&huart5)
 {
-
+	HAL_TIM_Base_Stop_IT(&htim10);
+	TIM10->CNT=0;
+	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 	if(package[1][0]!=0x68)
 	{
 		readFlag3=1;
@@ -922,7 +1058,7 @@ if(huart==&huart5)
 		UsartCount++;
 
 	}
-
+	HAL_TIM_Base_Start_IT(&htim10);
 }
 if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получено 1 измерение с каждого датчика
 {
@@ -987,7 +1123,6 @@ if(pr==0)
 	}
 
 
-
 	CountOfAccel++;
 
 
@@ -1015,6 +1150,40 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 }
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+
+	if(htim==&htim6)
+	{
+		TIM6->CNT=0;
+		memset(packageCut[0],0,9);
+		HAL_TIM_Base_Start_IT(&htim6);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart3);
+	  	HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
+	}
+	if(htim==&htim7)
+	{
+		TIM7->CNT=0;
+		memset(packageCut[2],0,9);
+		HAL_TIM_Base_Start_IT(&htim7);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart1);
+	  	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
+	}
+	if(htim==&htim10)
+	{
+		TIM10->CNT=0;
+		memset(packageCut[1],0,9);
+		HAL_TIM_Base_Start_IT(&htim10);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart5);
+	  	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
+	}
+
+
+
+}
 
 
 

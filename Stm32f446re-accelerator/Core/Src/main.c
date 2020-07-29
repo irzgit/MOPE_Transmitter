@@ -47,6 +47,10 @@
 SPI_HandleTypeDef hspi1;
 SPI_HandleTypeDef hspi3;
 
+TIM_HandleTypeDef htim6;
+TIM_HandleTypeDef htim7;
+TIM_HandleTypeDef htim10;
+
 UART_HandleTypeDef huart5;
 UART_HandleTypeDef huart1;
 UART_HandleTypeDef huart2;
@@ -70,6 +74,9 @@ static void MX_USART3_UART_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_SPI3_Init(void);
 static void MX_UART5_Init(void);
+static void MX_TIM6_Init(void);
+static void MX_TIM7_Init(void);
+static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
 
 #define NumofPacket 7
@@ -378,6 +385,9 @@ int main(void)
   MX_FATFS_Init();
   MX_SPI3_Init();
   MX_UART5_Init();
+  MX_TIM6_Init();
+  MX_TIM7_Init();
+  MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 
 	// Сд карта инициализация
@@ -475,7 +485,7 @@ int main(void)
 				SDCARD_WriteSingleBlock(blockAddr++, Buff_str1);
 
 
-				SDCARD_WriteSingleBlock(blockAddr++, Buff_str1);
+
 				/*
 				// Запись на SD 1 буфера
 				 fres = f_write(&fil, &Buff_str1, sizeof(Buff_str1), &bytesWrote);
@@ -500,6 +510,7 @@ int main(void)
 				SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
 
 
+
 				/*
 				// Запись на SD 2 буфера
 				 fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
@@ -511,7 +522,7 @@ int main(void)
 				  }
 				 fres= f_sync(&fil);
 */
-				SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
+
 
 			}
 
@@ -541,12 +552,11 @@ void SystemClock_Config(void)
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
   /** Initializes the CPU, AHB and APB busses clocks 
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
+  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
+  RCC_OscInitStruct.PLL.PLLM = 4;
   RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
@@ -649,6 +659,113 @@ static void MX_SPI3_Init(void)
   /* USER CODE BEGIN SPI3_Init 2 */
 
   /* USER CODE END SPI3_Init 2 */
+
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 9000-1;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 1000;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
+}
+
+/**
+  * @brief TIM7 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM7_Init(void)
+{
+
+  /* USER CODE BEGIN TIM7_Init 0 */
+
+  /* USER CODE END TIM7_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM7_Init 1 */
+
+  /* USER CODE END TIM7_Init 1 */
+  htim7.Instance = TIM7;
+  htim7.Init.Prescaler = 9000-1;
+  htim7.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim7.Init.Period = 1000;
+  htim7.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim7) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim7, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM7_Init 2 */
+
+  /* USER CODE END TIM7_Init 2 */
+
+}
+
+/**
+  * @brief TIM10 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM10_Init(void)
+{
+
+  /* USER CODE BEGIN TIM10_Init 0 */
+
+  /* USER CODE END TIM10_Init 0 */
+
+  /* USER CODE BEGIN TIM10_Init 1 */
+
+  /* USER CODE END TIM10_Init 1 */
+  htim10.Instance = TIM10;
+  htim10.Init.Prescaler = 9000-1;
+  htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim10.Init.Period = 1000;
+  htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  if (HAL_TIM_Base_Init(&htim10) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM10_Init 2 */
+
+  /* USER CODE END TIM10_Init 2 */
 
 }
 
@@ -821,6 +938,7 @@ static void MX_GPIO_Init(void)
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
+  __HAL_RCC_GPIOH_CLK_ENABLE();
   __HAL_RCC_GPIOA_CLK_ENABLE();
   __HAL_RCC_GPIOB_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
@@ -898,7 +1016,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 if(huart==&huart3)
 {
-
+	HAL_TIM_Base_Stop_IT(&htim6);
+	TIM6->CNT=0;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 if(package[0][0]!=0x68)
 {
 	readFlag=1;
@@ -913,10 +1033,14 @@ if(package[0][0]!=0x68)
 	UsartCount++;
 
 }
+HAL_TIM_Base_Start_IT(&htim6);
 }
 if(huart==&huart1)
 {
 
+	HAL_TIM_Base_Stop_IT(&htim7);
+	TIM7->CNT=0;
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 	if(package[2][0]!=0x68)
 	{
 		readFlag2=1;
@@ -930,12 +1054,14 @@ if(huart==&huart1)
 		}
 		UsartCount++;
 	}
-
+	HAL_TIM_Base_Start_IT(&htim7);
 }
 
 if(huart==&huart5)
 {
-
+	HAL_TIM_Base_Stop_IT(&htim10);
+	TIM10->CNT=0;
+	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 	if(package[1][0]!=0x68)
 	{
 		readFlag3=1;
@@ -950,7 +1076,7 @@ if(huart==&huart5)
 		UsartCount++;
 
 	}
-
+	HAL_TIM_Base_Start_IT(&htim10);
 }
 if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получено 1 измерение с каждого датчика
 {
@@ -1045,6 +1171,40 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 
 
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+
+	if(htim==&htim6)
+	{
+		TIM6->CNT=0;
+		memset(packageCut[0],0,9);
+		HAL_TIM_Base_Start_IT(&htim6);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart3);
+	  	HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
+	}
+	if(htim==&htim7)
+	{
+		TIM7->CNT=0;
+		memset(packageCut[2],0,9);
+		HAL_TIM_Base_Start_IT(&htim7);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart1);
+	  	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
+	}
+	if(htim==&htim10)
+	{
+		TIM10->CNT=0;
+		memset(packageCut[1],0,9);
+		HAL_TIM_Base_Start_IT(&htim10);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+	  	HAL_UART_Abort(&huart5);
+	  	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
+	}
+
+
+
+}
 
 
 

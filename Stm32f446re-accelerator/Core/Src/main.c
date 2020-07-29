@@ -380,7 +380,8 @@ int main(void)
   MX_UART5_Init();
   /* USER CODE BEGIN 2 */
 
-
+	// Сд карта инициализация
+	SDCARD_Init();
     // Инициализация радиоканала (sx1272)
 	Rf96_Lora_init();
 	Rf96_Lora_TX_mode();
@@ -395,6 +396,36 @@ int main(void)
 
     // Отправка первого нулевого пакета
 	PacketToRadio();
+
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+
+
+/*
+	///ФЛЕШКА
+	UINT bytesWrote;
+    fres = f_mount(&FatFs, "", 1); //1=mount now
+
+	  if (fres != FR_OK) {
+		while(1);
+	  }
+	  fres = f_open(&fil, "Data.txt", FA_CREATE_ALWAYS | FA_WRITE);
+
+    if(fres == FR_OK) {
+
+    } else {
+		while(1);
+    }
+    HAL_TIM_Base_Start_IT(&htim6);
+    HAL_TIM_Base_Start_IT(&htim7);
+    HAL_TIM_Base_Start_IT(&htim10);
+    */
+
+    /*
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+    */
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -443,6 +474,19 @@ int main(void)
 				// Запись на SD
 				SDCARD_WriteSingleBlock(blockAddr++, Buff_str1);
 
+
+				SDCARD_WriteSingleBlock(blockAddr++, Buff_str1);
+				/*
+				// Запись на SD 1 буфера
+				 fres = f_write(&fil, &Buff_str1, sizeof(Buff_str1), &bytesWrote);
+
+				  if(fres == FR_OK) {
+				  } else {
+
+				  }
+				 fres= f_sync(&fil);
+				 */
+
 			}
 			else
 			{
@@ -451,7 +495,22 @@ int main(void)
 
 				Buff_str2[510]=';';
 				Buff_str2[511]='\n';
+
 				// Запись на SD
+				SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
+
+
+				/*
+				// Запись на SD 2 буфера
+				 fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
+
+				  if(fres == FR_OK)
+				  {
+				  } else
+				  {
+				  }
+				 fres= f_sync(&fil);
+*/
 				SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
 
 			}

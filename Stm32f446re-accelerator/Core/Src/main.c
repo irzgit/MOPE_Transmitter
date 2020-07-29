@@ -385,9 +385,6 @@ int main(void)
 	Rf96_Lora_init();
 	Rf96_Lora_TX_mode();
 
-	// Сд карта инициализация
-	SDCARD_Init();
-
     // Запуск приема в дма с аксселерометров
     HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
 	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
@@ -395,6 +392,27 @@ int main(void)
 
     // Отправка первого нулевого пакета
 	PacketToRadio();
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
+
+
+
+
+	///ФЛЕШКА
+	UINT bytesWrote;
+    fres = f_mount(&FatFs, "", 1); //1=mount now
+
+	  if (fres != FR_OK) {
+		while(1);
+	  }
+	  fres = f_open(&fil, "Data.txt", FA_CREATE_ALWAYS | FA_WRITE);
+
+    if(fres == FR_OK) {
+
+    } else {
+		while(1);
+    }
+
+
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -440,9 +458,15 @@ int main(void)
 
 				Buff_str1[510]=';';
 				Buff_str1[511]='\n';
-				// Запись на SD
-				SDCARD_WriteSingleBlock(blockAddr++, Buff_str1);
 
+				// Запись на SD 1 буфера
+				 fres = f_write(&fil, &Buff_str1, sizeof(Buff_str1), &bytesWrote);
+
+				  if(fres == FR_OK) {
+				  } else {
+
+				  }
+				 fres= f_sync(&fil);
 			}
 			else
 			{
@@ -451,8 +475,15 @@ int main(void)
 
 				Buff_str2[510]=';';
 				Buff_str2[511]='\n';
-				// Запись на SD
-				SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
+				// Запись на SD 2 буфера
+				 fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
+
+				  if(fres == FR_OK)
+				  {
+				  } else
+				  {
+				  }
+				 fres= f_sync(&fil);
 
 			}
 

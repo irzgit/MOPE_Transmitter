@@ -1019,21 +1019,24 @@ if(huart==&huart3)
 	HAL_TIM_Base_Stop_IT(&htim6);
 	TIM6->CNT=0;
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-if(package[0][0]!=0x68)
-{
-	readFlag=1;
-	UsartCount=0;
-
-}else
-{
-	for(uint8_t i=0;i<9;i++)
+	if(package[0][0]!=0x68)
 	{
-		packageCut[0][i]=package[0][i+4];
-	}
-	UsartCount++;
+		readFlag=1;
+		UsartCount=0;
+		for(uint8_t i = 0; i < 14; i++) //?????
+			if(package[0][i] == 0)      //?????
+				UsartCount++;           //?????
 
-}
-HAL_TIM_Base_Start_IT(&htim6);
+	}else
+	{
+		for(uint8_t i=0;i<9;i++)
+		{
+			packageCut[0][i]=package[0][i+4];
+		}
+		UsartCount++;
+
+	}
+	HAL_TIM_Base_Start_IT(&htim6);
 }
 if(huart==&huart1)
 {
@@ -1045,7 +1048,9 @@ if(huart==&huart1)
 	{
 		readFlag2=1;
 		UsartCount=0;
-
+		for(uint8_t i = 0; i < 14; i++) //?????
+			if(package[2][i] == 0)      //?????
+				UsartCount++;           //?????
 	}else
 	{
 		for(uint8_t i=0;i<9;i++)
@@ -1061,12 +1066,14 @@ if(huart==&huart5)
 {
 	HAL_TIM_Base_Stop_IT(&htim10);
 	TIM10->CNT=0;
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 	if(package[1][0]!=0x68)
 	{
 		readFlag3=1;
 		UsartCount=0;
-
+		for(uint8_t i = 0; i < 14; i++) //?????
+			if(package[1][i] == 0)      //?????
+				UsartCount++;           //?????
 	}else
 	{
 		for(uint8_t i=0;i<9;i++)
@@ -1078,82 +1085,80 @@ if(huart==&huart5)
 	}
 	HAL_TIM_Base_Start_IT(&htim10);
 }
+
 if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получено 1 измерение с каждого датчика
 {
 	UsartCount=0;
 
 
-if(pr==0)
-{
-
-
-
-	reciveTime = HAL_GetTick();
-
-	uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
-	for(uint8_t i=0;i<9;i++)
+	if(pr==0)
 	{
-		Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
+
+
+
+		reciveTime = HAL_GetTick();
+
+		uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
+
+		}
+
+		CountOfAccel++;
+
+		if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
+		{
+			CountOfAccel=0;
+			metka=1;
+			pr=1;
+
+		}
+	} else
+	{
+		reciveTime = HAL_GetTick();
+
+		uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+9+36*CountOfAccel]=packageCut[0][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+18+36*CountOfAccel]=packageCut[1][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+27+36*CountOfAccel]=packageCut[2][i];
+
+		}
+
+
+
+		CountOfAccel++;
+
+
+		if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
+		{
+			CountOfAccel=0;
+			metka=1;
+			pr=0;
+		}
+
 
 	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
-
-	}
-
-
-
-	CountOfAccel++;
-
-
-	if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
-	{
-		CountOfAccel=0;
-		metka=1;
-		pr=1;
-
-	}
-} else
-{
-	reciveTime = HAL_GetTick();
-
-	uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Top[i+9+36*CountOfAccel]=packageCut[0][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Top[i+18+36*CountOfAccel]=packageCut[1][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Top[i+27+36*CountOfAccel]=packageCut[2][i];
-
-	}
-
-
-
-	CountOfAccel++;
-
-
-	if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
-	{
-		CountOfAccel=0;
-		metka=1;
-		pr=0;
-	}
-
-
-}
 
 
 }

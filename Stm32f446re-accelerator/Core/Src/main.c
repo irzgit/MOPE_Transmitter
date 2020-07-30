@@ -126,7 +126,20 @@ uint8_t UsartCount=0;
 // Считаем сколько записей сделано
 uint8_t CountOfAccel=0;
 // время отсчета микрконтроллера в милисекундах
-uint32_t reciveTime;
+uint32_t reciveTime=0;
+uint32_t reciveTime1=0;
+uint32_t reciveTime2=0;
+uint32_t reciveTime3=0;
+// Буффер для очереди
+uint8_t Buf_order[5040];
+uint8_t Buf_order1[5040];
+
+// Счетчик для очереди
+uint8_t count_order=0;
+uint8_t count_order_Point=0;
+uint8_t count_order1=0;
+uint8_t count_order_Point1=0;
+
 // Буффер посредник
 uint8_t Buff_Mid[36*NumofPacket];
 uint8_t Buff_Top[36*NumofPacket];
@@ -454,11 +467,10 @@ int main(void)
 		if(metka==1)
 		{
 			//HAL_UART_Transmit_IT(&huart2, "\n", 1);
-
+			reciveTime2 = HAL_GetTick();
 			metka=0;
 			if(pr==1)
 			{
-
 				if(z==0)
 				{
 					z=1;
@@ -467,47 +479,80 @@ int main(void)
 					for(uint8_t i=0;i<NumofPacket;i++)
 					{
 						uint32_TO_charmass(0, Buff_Mid, i*36, 8);
-
 					}
-
 				}
-				transmit(Buff_Mid,Buff_str1);
 
+
+				//transmit(Buff_Mid,Buff_str1);
+
+				transmit(&Buf_order1[count_order_Point1*252],Buff_str1);
+				count_order_Point1++;
+
+				if(count_order_Point1==20)
+				{
+					count_order_Point1=0;
+				}
 
 				Buff_str1[510]=';';
 				Buff_str1[511]='\n';
 
 				// Запись на SD 1 буфера
 				 fres = f_write(&fil, &Buff_str1, sizeof(Buff_str1), &bytesWrote);
-
-				  if(fres == FR_OK) {
-				  } else {
-
-				  }
+				 if (fres != FR_OK)
+				 {
+					while(1)
+					{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+					}
+				 }
 				 fres= f_sync(&fil);
+				  if (fres != FR_OK) {
+					while(1)
+						{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+						}
+				  }
 			}
 			else
 			{
 
-				transmit(Buff_Top,Buff_str2);
+				transmit(&Buf_order[count_order_Point*252],Buff_str2);
+				count_order_Point++;
+
+				if(count_order_Point==20)
+				{
+					count_order_Point=0;
+				}
 
 				Buff_str2[510]=';';
 				Buff_str2[511]='\n';
 				// Запись на SD 2 буфера
 				 fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
-
-				  if(fres == FR_OK)
-				  {
-				  } else
-				  {
-				  }
+				 if (fres != FR_OK)
+				 {
+					while(1)
+					{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+					}
+				 }
 				 fres= f_sync(&fil);
-
+				  if (fres != FR_OK) {
+					while(1)
+					{
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+					}
+				  }
+				 reciveTime3 = HAL_GetTick();
+				 reciveTime3 = HAL_GetTick();
 			}
-
-
-
-
 		}
 
 
@@ -998,24 +1043,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 
 if(huart==&huart3)
 {
-	HAL_TIM_Base_Stop_IT(&htim6);
-	TIM6->CNT=0;
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-if(package[0][0]!=0x68)
-{
-	readFlag=1;
-	UsartCount=0;
-
-}else
-{
-	for(uint8_t i=0;i<9;i++)
+		HAL_TIM_Base_Stop_IT(&htim6);
+		TIM6->CNT=0;
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+	if(package[0][0]!=0x68)
 	{
-		packageCut[0][i]=package[0][i+4];
-	}
-	UsartCount++;
+		readFlag=1;
+		UsartCount=0;
 
-}
-HAL_TIM_Base_Start_IT(&htim6);
+	}else
+	{
+		for(uint8_t i=0;i<9;i++)
+		{
+			packageCut[0][i]=package[0][i+4];
+		}
+		UsartCount++;
+
+	}
+	HAL_TIM_Base_Start_IT(&htim6);
 }
 if(huart==&huart1)
 {
@@ -1043,7 +1088,7 @@ if(huart==&huart5)
 {
 	HAL_TIM_Base_Stop_IT(&htim10);
 	TIM10->CNT=0;
-	  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 	if(package[1][0]!=0x68)
 	{
 		readFlag3=1;
@@ -1065,76 +1110,101 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 	UsartCount=0;
 
 
-if(pr==0)
-{
-
-
-
-	reciveTime = HAL_GetTick();
-
-	uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
-	for(uint8_t i=0;i<9;i++)
+	if(pr==0)
 	{
-		Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
-
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
-
-	}
 
 
 
-	CountOfAccel++;
+		reciveTime = HAL_GetTick();
+
+		uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
+
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
+
+		}
 
 
-	if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
-	{
-		CountOfAccel=0;
-		metka=1;
+
+		CountOfAccel++;
+
+
+		if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
+		{
+
+
+			for(uint16_t i=0;i<252;i++)
+			{
+				Buf_order1[i+count_order1*252]=Buff_Mid[i];
+			}
+			count_order1++;
+			if(count_order1==20)
+			{
+				count_order1=0;
+
+			}
+
+			CountOfAccel=0;
+			metka=1;
 		pr=1;
 
-	}
-} else
-{
-	reciveTime = HAL_GetTick();
-
-	uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
-	for(uint8_t i=0;i<9;i++)
+		}
+	} else
 	{
-		Buff_Top[i+9+36*CountOfAccel]=packageCut[0][i];
+		reciveTime = HAL_GetTick();
 
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Top[i+18+36*CountOfAccel]=packageCut[1][i];
+		uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+9+36*CountOfAccel]=packageCut[0][i];
 
-	}
-	for(uint8_t i=0;i<9;i++)
-	{
-		Buff_Top[i+27+36*CountOfAccel]=packageCut[2][i];
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+18+36*CountOfAccel]=packageCut[1][i];
 
-	}
+		}
+		for(uint8_t i=0;i<9;i++)
+		{
+			Buff_Top[i+27+36*CountOfAccel]=packageCut[2][i];
+
+		}
 
 
-	CountOfAccel++;
+		CountOfAccel++;
 
 
-	if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
-	{
-		CountOfAccel=0;
-		metka=1;
+		if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
+		{
+			for(uint16_t i=0;i<252;i++)
+			{
+				Buf_order[i+count_order*252]=Buff_Top[i];
+			}
+			count_order++;
+			if(count_order==20)
+			{
+				count_order=0;
+
+			}
+
+			CountOfAccel=0;
+			metka=1;
 		pr=0;
+			reciveTime1 = HAL_GetTick();
+		}
+
+
 	}
-
-
-}
 
 
 }

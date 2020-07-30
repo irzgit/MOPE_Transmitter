@@ -130,20 +130,21 @@ uint32_t reciveTime=0;
 uint32_t reciveTime1=0;
 uint32_t reciveTime2=0;
 uint32_t reciveTime3=0;
+#define NumOfOrder 20
 // Буффер для очереди
-uint8_t Buf_order[5040];
-uint8_t Buf_order1[5040];
+uint8_t Buf_order[36*NumofPacket*50];
+//uint8_t Buf_order1[5040];
 
 // Счетчик для очереди
 uint8_t count_order=0;
 uint8_t count_order_Point=0;
-uint8_t count_order1=0;
-uint8_t count_order_Point1=0;
+//uint8_t count_order1=0;
+//uint8_t count_order_Point1=0;
 
 // Буффер посредник
 uint8_t Buff_Mid[36*NumofPacket];
 uint8_t Buff_Top[36*NumofPacket];
-uint8_t Buff_str1[512];
+//uint8_t Buff_str1[512];
 uint8_t Buff_str2[512];
 // Буфер передачи по радио
 uint8_t RadioBuff[28];
@@ -453,7 +454,22 @@ int main(void)
   {
 
 
-
+	  if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_13)==RESET)
+	  {
+		  //Close file, don't forget this!
+		  //HAL_Delay(10);
+		   f_close(&fil);
+		  // HAL_Delay(5);
+		   //De-mount drive
+		  f_mount(NULL, "", 0);
+		  while(1)
+		  {
+		  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
+		  HAL_Delay(500);
+		//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
+		  HAL_Delay(500);
+		  }
+	  }
 	  // Синхронизация
 	    SyncAccel();
 
@@ -466,70 +482,36 @@ int main(void)
 		// Запись на SD карту
 		if(metka==1)
 		{
+
+
+
 			//HAL_UART_Transmit_IT(&huart2, "\n", 1);
 			reciveTime2 = HAL_GetTick();
 			metka=0;
-			if(pr==1)
+
+
+			if(z==0)
 			{
-				if(z==0)
+				z=1;
+
+				memset(Buf_order,0,NumofPacket*36);
+				for(uint8_t i=0;i<NumofPacket;i++)
 				{
-					z=1;
-
-					memset(Buff_Mid,0,sizeof(Buff_Mid));
-					for(uint8_t i=0;i<NumofPacket;i++)
-					{
-						uint32_TO_charmass(0, Buff_Mid, i*36, 8);
-					}
+					uint32_TO_charmass(0, Buf_order, i*36, 8);
 				}
-
-
-				//transmit(Buff_Mid,Buff_str1);
-
-				transmit(&Buf_order1[count_order_Point1*252],Buff_str1);
-				count_order_Point1++;
-
-				if(count_order_Point1==20)
-				{
-					count_order_Point1=0;
-				}
-
-				Buff_str1[510]=';';
-				Buff_str1[511]='\n';
-
-				// Запись на SD 1 буфера
-				 fres = f_write(&fil, &Buff_str1, sizeof(Buff_str1), &bytesWrote);
-				 if (fres != FR_OK)
-				 {
-					while(1)
-					{
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-					}
-				 }
-				 fres= f_sync(&fil);
-				  if (fres != FR_OK) {
-					while(1)
-						{
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-						}
-				  }
 			}
-			else
-			{
-
 				transmit(&Buf_order[count_order_Point*252],Buff_str2);
 				count_order_Point++;
 
-				if(count_order_Point==20)
+				if(count_order_Point==NumOfOrder)
 				{
 					count_order_Point=0;
 				}
 
 				Buff_str2[510]=';';
 				Buff_str2[511]='\n';
+
+
 				// Запись на SD 2 буфера
 				 fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
 				 if (fres != FR_OK)
@@ -542,17 +524,10 @@ int main(void)
 					}
 				 }
 				 fres= f_sync(&fil);
-				  if (fres != FR_OK) {
-					while(1)
-					{
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-						HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-					}
-				  }
+
 				 reciveTime3 = HAL_GetTick();
 				 reciveTime3 = HAL_GetTick();
-			}
+
 		}
 
 
@@ -972,6 +947,7 @@ static void MX_GPIO_Init(void)
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
                           |acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
@@ -1107,60 +1083,9 @@ if(huart==&huart5)
 }
 if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получено 1 измерение с каждого датчика
 {
-	UsartCount=0;
+	    UsartCount=0;
 
 
-	if(pr==0)
-	{
-
-
-
-		reciveTime = HAL_GetTick();
-
-		uint32_TO_charmass(reciveTime, Buff_Mid, CountOfAccel*36, 8);
-		for(uint8_t i=0;i<9;i++)
-		{
-			Buff_Mid[i+9+36*CountOfAccel]=packageCut[0][i];
-
-		}
-		for(uint8_t i=0;i<9;i++)
-		{
-			Buff_Mid[i+18+36*CountOfAccel]=packageCut[1][i];
-
-		}
-		for(uint8_t i=0;i<9;i++)
-		{
-			Buff_Mid[i+27+36*CountOfAccel]=packageCut[2][i];
-
-		}
-
-
-
-		CountOfAccel++;
-
-
-		if(CountOfAccel==NumofPacket)  // Считано 7 измерений с каждого датчика
-		{
-
-
-			for(uint16_t i=0;i<252;i++)
-			{
-				Buf_order1[i+count_order1*252]=Buff_Mid[i];
-			}
-			count_order1++;
-			if(count_order1==20)
-			{
-				count_order1=0;
-
-			}
-
-			CountOfAccel=0;
-			metka=1;
-		pr=1;
-
-		}
-	} else
-	{
 		reciveTime = HAL_GetTick();
 
 		uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
@@ -1191,7 +1116,7 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 				Buf_order[i+count_order*252]=Buff_Top[i];
 			}
 			count_order++;
-			if(count_order==20)
+			if(count_order==NumOfOrder)
 			{
 				count_order=0;
 
@@ -1199,12 +1124,11 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 
 			CountOfAccel=0;
 			metka=1;
-		pr=0;
 			reciveTime1 = HAL_GetTick();
 		}
 
 
-	}
+
 
 
 }

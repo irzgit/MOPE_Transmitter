@@ -106,6 +106,7 @@ BYTE xchg_spi (
 )
 {
 	BYTE rxDat;
+
     HAL_SPI_TransmitReceive(&hspi3, &dat, &rxDat, 1, 50);
     return rxDat;
 }

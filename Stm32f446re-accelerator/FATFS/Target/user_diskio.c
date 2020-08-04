@@ -139,7 +139,14 @@ DRESULT USER_write (
 { 
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
+	uint8_t mass[512];
+	for(uint16_t i=0;i<512;i++)
+	{
+		mass[i]=buff[i];
+	}
+
     return USER_SPI_write(pdrv, buff, sector, count);
+
   /* USER CODE END WRITE */
 }
 #endif /* _USE_WRITE == 1 */

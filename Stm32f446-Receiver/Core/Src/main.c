@@ -276,11 +276,11 @@ int main(void)
 
 
 
+
 	  if(Get_NIRQ_Di0()) // Прерывание по приему по радиоканалу
 	  	 	 {
 	  	 	    //  Rf96_LoRaRxPacket((char*)TX_RX_Radio);
 	  	 	   Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
-
 	  	 	  if(Get_NIRQ_Di3()) // Если CRC не совпадает
 	  	 		{
 
@@ -291,7 +291,8 @@ int main(void)
 	  	 	  {
 	  	 		transmit(TX_RX_Radio);
 	  	 	  }
-	  	 	Rf96_LoRaClearIrq();
+
+	  	 	  Rf96_LoRaClearIrq();
 
 	  	 	//TX_RX_Radio[28]='\n';
 
@@ -387,7 +388,7 @@ static void MX_SPI1_Init(void)
   hspi1.Init.CLKPolarity = SPI_POLARITY_LOW;
   hspi1.Init.CLKPhase = SPI_PHASE_1EDGE;
   hspi1.Init.NSS = SPI_NSS_SOFT;
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
   hspi1.Init.TIMode = SPI_TIMODE_DISABLE;
   hspi1.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;

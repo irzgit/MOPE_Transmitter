@@ -8,6 +8,8 @@
 
 #define Get_NIRQ_Di0()					HAL_GPIO_ReadPin(GPIOA,GPIO_PIN_10)//
 #define Get_NIRQ_Di1()                  HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_3)
+#define Get_NIRQ_Di2()					HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_5)//
+#define Get_NIRQ_Di3()                  HAL_GPIO_ReadPin(GPIOB,GPIO_PIN_4)
 // Регистры RF96
 /********************Lroa mode***************************/
 #define LR_RegFifo                                  0x00
@@ -80,7 +82,7 @@ void Rf96_LNA(uint8_t LNA_value);
 void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_t HeaderMod_value);
 void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uint16_t SymbTimeout_value);
 void Rf96_Preamble(uint16_t PreambLen_value);
-void Rf96_PinOut_Di0_Di1(uint8_t Di0_value,uint8_t Di1_value);
+void Rf96_PinOut_Di0_Di1_Di2_Di3(uint8_t Di0_value, uint8_t Di1_value,uint8_t Di2_value ,uint8_t Di3_value);
 void Rf96_irqMaskTX(void);
 void Rf96_irqMaskRX(void);
 void Rf96_PayloadLength(uint8_t LengthBytes_value);

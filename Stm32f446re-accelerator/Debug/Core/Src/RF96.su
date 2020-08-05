@@ -11,7 +11,7 @@ RF96.c:106:6:Rf96_LNA	16	static
 RF96.c:115:6:Rf96_bandwide_CR_HeadreMod	16	static
 RF96.c:128:6:Rf96_SF_LoadCRC_SymbTimeout	16	static
 RF96.c:135:6:Rf96_Preamble	16	static
-RF96.c:141:6:Rf96_PinOut_Di0_Di1	16	static
+RF96.c:141:6:Rf96_PinOut_Di0_Di1_Di2_Di3	24	static
 RF96.c:146:6:Rf96_irqMaskTX	8	static
 RF96.c:151:6:Rf96_irqMaskRX	8	static
 RF96.c:156:6:Rf96_PayloadLength	16	static

@@ -4,7 +4,7 @@
 const uint8_t Rf96_FreqTbl[3][3] =
 {
 		{0x6C, 0x80, 0x00},//434 Мгц
-		{0xD9, 0x00, 0x24},  // 868 Мгц. (Не проверялось)
+		{0xD9, 0x00, 0x00},  // 868 Мгц. (Не проверялось) //{0xD9, 0x00, 0x24},  // 868 Мгц. (Не проверялось)
 		{0xE4, 0xC0, 0x00}  // 915 Мгц
 
 };
@@ -116,8 +116,8 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	//SPIWrite(LR_RegModemConfig1,0x8C);
-	SPIWrite(LR_RegModemConfig1,0x8E);
+	//SPIWrite(LR_RegModemConfig1,0x8C); // Без CRC16
+	SPIWrite(LR_RegModemConfig1,0x8E); // С CRC16
 	//SPIWrite(LR_RegDetectOptimize,0xC5);
 	//SPIWrite(LR_RegDetecionThreshold,0x0C);
 }
@@ -138,9 +138,9 @@ void Rf96_Preamble(uint16_t PreambLen_value)
 	SPIWrite(LR_RegPreambleLsb,(uint8_t)PreambLen_value);
 }
 // Настройка вывода Di0 0 - прерывание по приему, 1 - прерывание по передаче, Di1 0- прерывание по таймауту
-void Rf96_PinOut_Di0_Di1(uint8_t Di0_value, uint8_t Di1_value)
+void Rf96_PinOut_Di0_Di1_Di2_Di3(uint8_t Di0_value, uint8_t Di1_value,uint8_t Di2_value ,uint8_t Di3_value)
 {
-	SPIWrite(REG_LR_DIOMAPPING1,(Di0_value<<6)+(Di1_value<<4));
+	SPIWrite(REG_LR_DIOMAPPING1,(Di0_value<<6)+(Di1_value<<4)+ (Di2_value<<2)+(Di3_value));
 }
 //Снятие маски с прерывания по TX
 void Rf96_irqMaskTX(void)
@@ -259,7 +259,7 @@ void Rf96_Lora_TX_mode(void)
 {
 	//RAK811antTx();
 	  // Настройка вывода Di0 на прерывание по отправке
-	Rf96_PinOut_Di0_Di1(1,0);
+	Rf96_PinOut_Di0_Di1_Di2_Di3(1,0,0,2);
       // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Снимаем маску с прерывания по TX
@@ -277,8 +277,8 @@ void Rf96_Lora_RX_mode(void)
 {
 	  //RAK811antRx();
 	  SPIWrite(REG_LR_PADAC,0x84);                            //Normal and Rx
-	  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
-
+	//  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
+	  SPIWrite(LR_RegHopPeriod,0x00);   //??????
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту
 	  Rf96_PinOut_Di0_Di1(0,0);
 	  // Снимаем маску с прерывания по RX

@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   00009049  00000000  00000000  00052aec  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000ca40e  00000000  00000000  0005bb35  2**0
+ 18 .debug_str    000ca45b  00000000  00000000  0005bb35  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  00125f43  2**0
+ 19 .comment      0000007b  00000000  00000000  00125f90  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  00002c3c  00000000  00000000  00125fc0  2**2
+ 20 .debug_frame  00002c3c  00000000  00000000  0012600c  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -924,11 +924,11 @@ void Rf96_Lora_RX_mode(void)
  8000856:	2184      	movs	r1, #132	; 0x84
  8000858:	204d      	movs	r0, #77	; 0x4d
  800085a:	f000 fcb1 	bl	80011c0 <SPIWrite>
-	  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
- 800085e:	21ff      	movs	r1, #255	; 0xff
+	//  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
+	  SPIWrite(LR_RegHopPeriod,0x0);   //??????
+ 800085e:	2100      	movs	r1, #0
  8000860:	2024      	movs	r0, #36	; 0x24
  8000862:	f000 fcad 	bl	80011c0 <SPIWrite>
-
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту
 	  Rf96_PinOut_Di0_Di1_Di2_Di3(0,0,0,2);
  8000866:	2302      	movs	r3, #2
@@ -1732,7 +1732,6 @@ int main(void)
 	  	 	   Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
  8000e50:	4808      	ldr	r0, [pc, #32]	; (8000e74 <main+0x54>)
  8000e52:	f7ff fcbd 	bl	80007d0 <Rf96_DataRX_From_FiFO>
-
 	  	 	  if(Get_NIRQ_Di3()) // Если CRC не совпадает
  8000e56:	2110      	movs	r1, #16
  8000e58:	4807      	ldr	r0, [pc, #28]	; (8000e78 <main+0x58>)
@@ -1749,7 +1748,8 @@ int main(void)
  8000e64:	4803      	ldr	r0, [pc, #12]	; (8000e74 <main+0x54>)
  8000e66:	f7ff fd15 	bl	8000894 <transmit>
 	  	 	  }
-	  	 	Rf96_LoRaClearIrq();
+
+	  	 	  Rf96_LoRaClearIrq();
  8000e6a:	f7ff fba1 	bl	80005b0 <Rf96_LoRaClearIrq>
 	  if(Get_NIRQ_Di0()) // Прерывание по приему по радиоканалу
  8000e6e:	e7e7      	b.n	8000e40 <main+0x20>
@@ -1936,9 +1936,9 @@ static void MX_SPI1_Init(void)
  8000f82:	4b0e      	ldr	r3, [pc, #56]	; (8000fbc <MX_SPI1_Init+0x64>)
  8000f84:	f44f 7200 	mov.w	r2, #512	; 0x200
  8000f88:	619a      	str	r2, [r3, #24]
-  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_8;
+  hspi1.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_16;
  8000f8a:	4b0c      	ldr	r3, [pc, #48]	; (8000fbc <MX_SPI1_Init+0x64>)
- 8000f8c:	2210      	movs	r2, #16
+ 8000f8c:	2218      	movs	r2, #24
  8000f8e:	61da      	str	r2, [r3, #28]
   hspi1.Init.FirstBit = SPI_FIRSTBIT_MSB;
  8000f90:	4b0a      	ldr	r3, [pc, #40]	; (8000fbc <MX_SPI1_Init+0x64>)
@@ -2942,35 +2942,20 @@ void USART2_IRQHandler(void)
  80014c0:	20000230 	.word	0x20000230
 
 080014c4 <_sbrk>:
-/**
- _sbrk
- Increase program data space. Malloc and related functions depend on this
-**/
-caddr_t _sbrk(int incr)
-{
  80014c4:	b580      	push	{r7, lr}
  80014c6:	b084      	sub	sp, #16
  80014c8:	af00      	add	r7, sp, #0
  80014ca:	6078      	str	r0, [r7, #4]
-	extern char end asm("end");
-	static char *heap_end;
-	char *prev_heap_end;
-
-	if (heap_end == 0)
  80014cc:	4b11      	ldr	r3, [pc, #68]	; (8001514 <_sbrk+0x50>)
  80014ce:	681b      	ldr	r3, [r3, #0]
  80014d0:	2b00      	cmp	r3, #0
  80014d2:	d102      	bne.n	80014da <_sbrk+0x16>
-		heap_end = &end;
  80014d4:	4b0f      	ldr	r3, [pc, #60]	; (8001514 <_sbrk+0x50>)
  80014d6:	4a10      	ldr	r2, [pc, #64]	; (8001518 <_sbrk+0x54>)
  80014d8:	601a      	str	r2, [r3, #0]
-
-	prev_heap_end = heap_end;
  80014da:	4b0e      	ldr	r3, [pc, #56]	; (8001514 <_sbrk+0x50>)
  80014dc:	681b      	ldr	r3, [r3, #0]
  80014de:	60fb      	str	r3, [r7, #12]
-	if (heap_end + incr > stack_ptr)
  80014e0:	4b0c      	ldr	r3, [pc, #48]	; (8001514 <_sbrk+0x50>)
  80014e2:	681a      	ldr	r2, [r3, #0]
  80014e4:	687b      	ldr	r3, [r7, #4]
@@ -2978,28 +2963,19 @@ caddr_t _sbrk(int incr)
  80014e8:	466a      	mov	r2, sp
  80014ea:	4293      	cmp	r3, r2
  80014ec:	d907      	bls.n	80014fe <_sbrk+0x3a>
-	{
-		errno = ENOMEM;
  80014ee:	f002 fd73 	bl	8003fd8 <__errno>
  80014f2:	4602      	mov	r2, r0
  80014f4:	230c      	movs	r3, #12
  80014f6:	6013      	str	r3, [r2, #0]
-		return (caddr_t) -1;
  80014f8:	f04f 33ff 	mov.w	r3, #4294967295	; 0xffffffff
  80014fc:	e006      	b.n	800150c <_sbrk+0x48>
-	}
-
-	heap_end += incr;
  80014fe:	4b05      	ldr	r3, [pc, #20]	; (8001514 <_sbrk+0x50>)
  8001500:	681a      	ldr	r2, [r3, #0]
  8001502:	687b      	ldr	r3, [r7, #4]
  8001504:	4413      	add	r3, r2
  8001506:	4a03      	ldr	r2, [pc, #12]	; (8001514 <_sbrk+0x50>)
  8001508:	6013      	str	r3, [r2, #0]
-
-	return (caddr_t) prev_heap_end;
  800150a:	68fb      	ldr	r3, [r7, #12]
-}
  800150c:	4618      	mov	r0, r3
  800150e:	3710      	adds	r7, #16
  8001510:	46bd      	mov	sp, r7
@@ -3043,99 +3019,45 @@ void SystemInit(void)
  8001544:	e000ed00 	.word	0xe000ed00
 
 08001548 <Reset_Handler>:
-
-    .section  .text.Reset_Handler
-  .weak  Reset_Handler
-  .type  Reset_Handler, %function
-Reset_Handler:  
-  ldr   sp, =_estack      /* set stack pointer */
  8001548:	f8df d034 	ldr.w	sp, [pc, #52]	; 8001580 <LoopFillZerobss+0x14>
-
-/* Copy the data segment initializers from flash to SRAM */  
-  movs  r1, #0
  800154c:	2100      	movs	r1, #0
-  b  LoopCopyDataInit
  800154e:	e003      	b.n	8001558 <LoopCopyDataInit>
 
 08001550 <CopyDataInit>:
-
-CopyDataInit:
-  ldr  r3, =_sidata
  8001550:	4b0c      	ldr	r3, [pc, #48]	; (8001584 <LoopFillZerobss+0x18>)
-  ldr  r3, [r3, r1]
  8001552:	585b      	ldr	r3, [r3, r1]
-  str  r3, [r0, r1]
  8001554:	5043      	str	r3, [r0, r1]
-  adds  r1, r1, #4
  8001556:	3104      	adds	r1, #4
 
 08001558 <LoopCopyDataInit>:
-    
-LoopCopyDataInit:
-  ldr  r0, =_sdata
  8001558:	480b      	ldr	r0, [pc, #44]	; (8001588 <LoopFillZerobss+0x1c>)
-  ldr  r3, =_edata
  800155a:	4b0c      	ldr	r3, [pc, #48]	; (800158c <LoopFillZerobss+0x20>)
-  adds  r2, r0, r1
  800155c:	1842      	adds	r2, r0, r1
-  cmp  r2, r3
  800155e:	429a      	cmp	r2, r3
-  bcc  CopyDataInit
  8001560:	d3f6      	bcc.n	8001550 <CopyDataInit>
-  ldr  r2, =_sbss
  8001562:	4a0b      	ldr	r2, [pc, #44]	; (8001590 <LoopFillZerobss+0x24>)
-  b  LoopFillZerobss
  8001564:	e002      	b.n	800156c <LoopFillZerobss>
 
 08001566 <FillZerobss>:
-/* Zero fill the bss segment. */  
-FillZerobss:
-  movs  r3, #0
  8001566:	2300      	movs	r3, #0
-  str  r3, [r2], #4
  8001568:	f842 3b04 	str.w	r3, [r2], #4
 
 0800156c <LoopFillZerobss>:
-    
-LoopFillZerobss:
-  ldr  r3, = _ebss
  800156c:	4b09      	ldr	r3, [pc, #36]	; (8001594 <LoopFillZerobss+0x28>)
-  cmp  r2, r3
  800156e:	429a      	cmp	r2, r3
-  bcc  FillZerobss
  8001570:	d3f9      	bcc.n	8001566 <FillZerobss>
-
-/* Call the clock system intitialization function.*/
-  bl  SystemInit   
  8001572:	f7ff ffd3 	bl	800151c <SystemInit>
-/* Call static constructors */
-    bl __libc_init_array
  8001576:	f002 fd35 	bl	8003fe4 <__libc_init_array>
-/* Call the application's entry point.*/
-  bl  main
  800157a:	f7ff fc51 	bl	8000e20 <main>
-  bx  lr    
  800157e:	4770      	bx	lr
-  ldr   sp, =_estack      /* set stack pointer */
  8001580:	20020000 	.word	0x20020000
-  ldr  r3, =_sidata
  8001584:	080048f4 	.word	0x080048f4
-  ldr  r0, =_sdata
  8001588:	20000000 	.word	0x20000000
-  ldr  r3, =_edata
  800158c:	20000070 	.word	0x20000070
-  ldr  r2, =_sbss
  8001590:	20000070 	.word	0x20000070
-  ldr  r3, = _ebss
  8001594:	20000290 	.word	0x20000290
 
 08001598 <ADC_IRQHandler>:
- * @retval None       
-*/
-    .section  .text.Default_Handler,"ax",%progbits
-Default_Handler:
-Infinite_Loop:
-  b  Infinite_Loop
  8001598:	e7fe      	b.n	8001598 <ADC_IRQHandler>
 	...
 

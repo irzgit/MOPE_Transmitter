@@ -4,7 +4,7 @@
 const uint8_t Rf96_FreqTbl[3][3] =
 {
 		{0x6C, 0x80, 0x00},//434 Мгц
-		{0xD9, 0x00, 0x24},  // 868 Мгц. (Не проверялось)
+		{0xD9, 0x00, 0x00},  // 868 Мгц.  //{0xD9, 0x00, 0x24},  // 868 Мгц.
 		{0xE4, 0xC0, 0x00}  // 915 Мгц
 
 };
@@ -278,8 +278,8 @@ void Rf96_Lora_RX_mode(void)
 {
 	  //RAK811antRx();
 	  SPIWrite(REG_LR_PADAC,0x84);                            //Normal and Rx
-	  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
-
+	//  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
+	  SPIWrite(LR_RegHopPeriod,0x0);   //??????
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту
 	  Rf96_PinOut_Di0_Di1_Di2_Di3(0,0,0,2);
 	  // Снимаем маску с прерывания по RX

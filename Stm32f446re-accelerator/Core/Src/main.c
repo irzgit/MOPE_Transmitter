@@ -81,7 +81,8 @@ static void MX_TIM10_Init(void);
 
 #define NumofPacket 7
 #define file_name_sect 2688
-#define file_conf_sect 2049
+#define file_conf_sect1 2176
+#define file_conf_sect2 2432
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/

@@ -128,7 +128,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uint16_t SymbTimeout_value)
 {
 	//SPIWrite(LR_RegModemConfig2,((Rf96_SpreadFactorTbl[SF_value]<<4)+(PayloadCrc_value<<2)+(SymbTimeout_value>>8)));
-	SPIWrite(LR_RegModemConfig2,0x77);
+	SPIWrite(LR_RegModemConfig2,0x74);
 	SPIWrite(LR_RegSymbTimeoutLsb,(uint8_t)SymbTimeout_value);
 }
 //Устанавливаем длину преамбулы в байтах: 4+PreambLen_value
@@ -218,7 +218,7 @@ void Rf96_Lora_init(void)
 	// Выбираем выходную мощность
 	Rf96_OutPower(0);
 	// Выбираем ограничение по току
-	Rf96_OCP(0);
+	Rf96_OCP(1);
 	// Выбираем LNA
 	Rf96_LNA(1);
 	// Выбираем полосу частот, Coding rate, и мод заголовка

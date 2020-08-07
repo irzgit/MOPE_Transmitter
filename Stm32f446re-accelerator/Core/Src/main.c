@@ -80,9 +80,11 @@ static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
 
 #define NumofPacket 7
-#define file_name_sect 2688
-#define file_conf_sect1 2176
-#define file_conf_sect2 2432
+extern uint32_t file_name_sect;//2688
+extern uint32_t file_conf_sect1; //2176
+extern uint32_t file_conf_sect2;// 2432
+extern uint32_t blockAddr;//2816
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -100,14 +102,13 @@ uint8_t package[3][14] = {0};
 // Отбрасывание ненужных байт с аксселерометра
 uint8_t packageCut[3][9] = {0};
 
-//SD карта
-uint32_t blockAddr = 2816;
+
 uint32_t Sector_Namefile=0;
-uint16_t NubofByte=0;
+uint32_t NubofByte=0;
 ///
 uint8_t block_file[512]={0x44,0x41,0x54,0x41,0x20,0x20,0x20,0x20,0x54,0x58,0x54,0x20,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 //uint8_t block_file2[512]={0x52,0x52,0x61,0x41,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
-uint8_t block_file2[512]={0xF8,0xFF,0xFF,0xFF,0x03,0x00,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x03,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+uint8_t block_file2[512]={0xF8,0xFF,0xFF,0xFF,0x03,0x00,0xFF,0xFF,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00};
 
 // Парсер
 ////первый акселерометр
@@ -159,11 +160,14 @@ uint8_t Buff_str2[512];
 // Буфер передачи по радио
 uint8_t RadioBuff[28];
 
-uint8_t pr=0;
+uint8_t start_sector=0;
 uint8_t metka=0;
 uint8_t z=0;
 uint16_t pac = 0;
 uint16_t block = 0x03;
+uint16_t sector = 0;
+uint16_t numb_sect = 0x00;
+uint8_t block_addr = 1;
 
 // 1 - акселерометр с адресом 50
 // 2 - акселерометр с адресом 100
@@ -401,7 +405,6 @@ int main(void)
   /* USER CODE END SysInit */
 
   /* Initialize all configured peripherals */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3,GPIO_PIN_SET);
   MX_GPIO_Init();
   MX_DMA_Init();
   MX_SPI1_Init();
@@ -450,13 +453,12 @@ int main(void)
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
 
 
-	//SDCARD_Init();
+//	SDCARD_Init();
+//	 SDCARD_WriteSingleBlock(file_conf_sect1, block_file2);
+//	 SDCARD_WriteSingleBlock(file_conf_sect2, block_file2);
 
 	///ФЛЕШКА
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-    HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+
 	UINT bytesWrote;
     fres = f_mount(&FatFs, "", 1); //1=mount now
 
@@ -480,8 +482,18 @@ int main(void)
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 		}
     }
+    for(uint8_t i=0;i<10;i++)
+    {
+    	Buff_str2[i]=i;
+    }
 
-   // f_close(&fil);
+    fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
+    f_close(&fil);
+
+
+    	 SDCARD_Init();
+    	// SDCARD_WriteSingleBlock(file_conf_sect1, block_file2);
+    	// SDCARD_WriteSingleBlock(file_conf_sect2, block_file2);
 
     HAL_TIM_Base_Start_IT(&htim6);
     HAL_TIM_Base_Start_IT(&htim7);
@@ -563,7 +575,7 @@ if(count_order_Minus>0)
 
 
 				// Запись на SD 2 буфера
-
+/*
 				fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
 				 if (fres != FR_OK)
 				 {
@@ -576,47 +588,87 @@ if(count_order_Minus>0)
 				 }
 				 fres = f_sync(&fil);
 
-
+*/
 				 SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
 				 NubofByte+=2;
 				 if(NubofByte==256)
 				 {
 					 pac += 2;
 					 NubofByte=0;
-//					 block_file[30]+=1;
+					 if(block_file[30] == 0xFF)
+					 {
+						 block_file[31] += 1;
+						 block_file[30] = 0;
+					 } else
+					 {
+						 block_file[30]+=1;
+					 }
 
-					 block += 1;
-					 block_file2[4 + pac] = block;
-					 block_file2[5 + pac] = 0x00;
-					 block_file2[6 + pac] = 0xFF;
-					 block_file2[7 + pac] = 0xFF;
-					 SDCARD_WriteSingleBlock(file_conf_sect, block_file2);
+
+					 //начальная запись в сектор
+					 if(start_sector == 0)
+					 {
+						 block += 1;
+						 block_file2[4 + pac] = block;
+						 block_file2[5 + pac] = numb_sect;
+						 block_file2[6 + pac] = 0xFF;
+						 block_file2[7 + pac] = 0xFF;
+						 if(block_file2[4 + pac] == 0xFF)
+							 {
+								 block_file2[509] = numb_sect;
+								 numb_sect += 1;
+								 block_file2[510] = 0x00;
+								 block_file2[511] = numb_sect;
+								 start_sector = 1;
+								 block = 0x00;
+							 }
+						 SDCARD_WriteSingleBlock(file_conf_sect1, block_file2);
+						 SDCARD_WriteSingleBlock(file_conf_sect2, block_file2);
+					 } else
+					 {
+						 //запись в следующие секторa
+
+						 pac = 0;
+						 block += 1;
+						 block_file2[0 + sector] = block;
+						 block_file2[1 + sector] = numb_sect;
+						 block_file2[2 + sector] = 0xFF;
+						 block_file2[3 + sector] = 0xFF;
+
+						 if(block_file2[0 + sector] == 0xFF)
+						 {
+							 block_file2[509] = numb_sect;
+							 numb_sect += 1;
+							 block_file2[510] = 0x00;
+							 block_file2[511] = numb_sect;
+							 SDCARD_WriteSingleBlock(file_conf_sect1 + block_addr, block_file2);
+							 SDCARD_WriteSingleBlock(file_conf_sect2 + block_addr, block_file2);
+							 sector = 0;
+							 block_addr += 1;
+							 block = 0x00;
+						 } else
+						 {
+							 sector += 2;
+							 SDCARD_WriteSingleBlock(file_conf_sect1 + block_addr, block_file2);
+							 SDCARD_WriteSingleBlock(file_conf_sect2 + block_addr, block_file2);
+						 }
+					  }
 				 }
+
+
+
 				 block_file[29]=NubofByte;
 
-				// Sector_Namefile+=512;
-				// block_file[27]=(uint8_t)(Sector_Namefile>>24);
-				// block_file[28]=(uint8_t)(Sector_Namefile>>16);
-				// block_file[29]=(uint8_t)(Sector_Namefile>>8);
-				// block_file[30]=(uint8_t)(Sector_Namefile);
 
 
-			 SDCARD_WriteSingleBlock(file_name_sect, block_file);
+				 SDCARD_WriteSingleBlock(file_name_sect, block_file);
 
-/*
-		    pac++;
 
-				 if(pac == 129)
-				 {
-					 pac = 0;
-					 block_file2[488]-=1;
-				     block_file2[492]+=1;
-					 SDCARD_WriteSingleBlock(file_conf_sect, block_file2);
-				 }
-*/
 				 countT++;
-				 if(countT==255)
+				 if(countT==100)
 				 {
+				//	 block_file[29]=0;
+					// SDCARD_WriteSingleBlock(file_name_sect, block_file);
 					 countT=0;
 				 }
 
@@ -1040,12 +1092,13 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOD_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3|GPIO_PIN_4 
-                          |acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
-
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOA, acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|acel2_Pin|acel2_2_Pin|GPIO_PIN_6, GPIO_PIN_RESET);

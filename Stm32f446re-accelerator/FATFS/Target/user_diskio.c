@@ -47,11 +47,9 @@ static volatile DSTATUS Stat = STA_NOINIT;
 
 
 extern uint32_t file_name_sect=0;//2688
-extern uint32_t file_conf_sect1=0; //2176
-extern uint32_t file_conf_sect2=0;// 2432
+extern uint32_t file_count_sect1=0; //2176
+extern uint32_t file_count_sect2=0;// 2432
 extern uint32_t blockAddr = 0;//2816
-uint32_t countTX=0;
-uint32_t countRX=0;
 /* USER CODE END DECL */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -123,8 +121,6 @@ DRESULT USER_read (
 	UINT count      /* Number of sectors to read */
 )
 {
-
-
   /* USER CODE BEGIN READ */
     return USER_SPI_read(pdrv, buff, sector, count);
   /* USER CODE END READ */
@@ -146,7 +142,6 @@ DRESULT USER_write (
 	UINT count          /* Number of sectors to write */
 )
 { 
-
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
 	uint8_t mass[512];
@@ -156,13 +151,13 @@ DRESULT USER_write (
 	}
 if(buff[0]==0xF8 && buff[1]==0xFF && buff[2]==0xFF && buff[3]==0xFF)
 {
-	if(file_conf_sect1==0)
+	if(file_count_sect1==0)
 	{
-	file_conf_sect1=sector;
+		file_count_sect1=sector;
 	}
 	else
 	{
-	file_conf_sect2=sector;
+		file_count_sect2=sector;
 	}
 }
 if(buff[0]=='D'&& buff[1]=='A' && buff[2]=='T' && buff[3]=='A' )

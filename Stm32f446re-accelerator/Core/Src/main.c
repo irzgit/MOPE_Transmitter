@@ -1252,6 +1252,11 @@ if(UsartCount==3 && readFlag==0 && readFlag2==0 && readFlag3==0)  // Получ�
 {
 	    UsartCount=0;
 
+	    if(packageCut[0][1]>0x18 || packageCut[0][4]>0x18 || packageCut[0][7]>0x18 ||packageCut[1][1]>0x18 || packageCut[1][4]>0x18 || packageCut[1][7]>0x18 ||packageCut[2][1]>0x18 || packageCut[2][4]>0x18 || packageCut[2][7]>0x18)
+	    {
+
+	    	reciveTime = HAL_GetTick();
+	    }
 
 		reciveTime = HAL_GetTick();
 

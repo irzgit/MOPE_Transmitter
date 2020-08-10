@@ -277,7 +277,7 @@ void Rf96_Lora_TX_mode(void)
 void Rf96_Lora_RX_mode(void)
 {
 	  //RAK811antRx();
-	  SPIWrite(REG_LR_PADAC,0x84);                            //Normal and Rx
+	//  SPIWrite(0x5A,0x87);                            //Normal and Rx
 	//  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
 	  SPIWrite(LR_RegHopPeriod,0x0);   //??????
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту

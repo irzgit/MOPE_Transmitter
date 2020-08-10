@@ -39,11 +39,11 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   0000722d  00000000  00000000  0004cd28  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000c8135  00000000  00000000  00053f55  2**0
+ 18 .debug_str    000c818a  00000000  00000000  00053f55  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  0011c08a  2**0
+ 19 .comment      0000007b  00000000  00000000  0011c0df  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  0000218c  00000000  00000000  0011c108  2**2
+ 20 .debug_frame  0000218c  00000000  00000000  0011c15c  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -1805,9 +1805,9 @@ static void MX_USART2_UART_Init(void)
  8000f44:	4b11      	ldr	r3, [pc, #68]	; (8000f8c <MX_USART2_UART_Init+0x4c>)
  8000f46:	4a12      	ldr	r2, [pc, #72]	; (8000f90 <MX_USART2_UART_Init+0x50>)
  8000f48:	601a      	str	r2, [r3, #0]
-  huart2.Init.BaudRate = 115200;
+  huart2.Init.BaudRate = 230400;
  8000f4a:	4b10      	ldr	r3, [pc, #64]	; (8000f8c <MX_USART2_UART_Init+0x4c>)
- 8000f4c:	f44f 32e1 	mov.w	r2, #115200	; 0x1c200
+ 8000f4c:	f44f 3261 	mov.w	r2, #230400	; 0x38400
  8000f50:	605a      	str	r2, [r3, #4]
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
  8000f52:	4b0e      	ldr	r3, [pc, #56]	; (8000f8c <MX_USART2_UART_Init+0x4c>)
@@ -2803,35 +2803,20 @@ void USART6_IRQHandler(void)
  8001484:	20000318 	.word	0x20000318
 
 08001488 <_sbrk>:
-/**
- _sbrk
- Increase program data space. Malloc and related functions depend on this
-**/
-caddr_t _sbrk(int incr)
-{
  8001488:	b580      	push	{r7, lr}
  800148a:	b084      	sub	sp, #16
  800148c:	af00      	add	r7, sp, #0
  800148e:	6078      	str	r0, [r7, #4]
-	extern char end asm("end");
-	static char *heap_end;
-	char *prev_heap_end;
-
-	if (heap_end == 0)
  8001490:	4b11      	ldr	r3, [pc, #68]	; (80014d8 <_sbrk+0x50>)
  8001492:	681b      	ldr	r3, [r3, #0]
  8001494:	2b00      	cmp	r3, #0
  8001496:	d102      	bne.n	800149e <_sbrk+0x16>
-		heap_end = &end;
  8001498:	4b0f      	ldr	r3, [pc, #60]	; (80014d8 <_sbrk+0x50>)
  800149a:	4a10      	ldr	r2, [pc, #64]	; (80014dc <_sbrk+0x54>)
  800149c:	601a      	str	r2, [r3, #0]
-
-	prev_heap_end = heap_end;
  800149e:	4b0e      	ldr	r3, [pc, #56]	; (80014d8 <_sbrk+0x50>)
  80014a0:	681b      	ldr	r3, [r3, #0]
  80014a2:	60fb      	str	r3, [r7, #12]
-	if (heap_end + incr > stack_ptr)
  80014a4:	4b0c      	ldr	r3, [pc, #48]	; (80014d8 <_sbrk+0x50>)
  80014a6:	681a      	ldr	r2, [r3, #0]
  80014a8:	687b      	ldr	r3, [r7, #4]
@@ -2839,28 +2824,19 @@ caddr_t _sbrk(int incr)
  80014ac:	466a      	mov	r2, sp
  80014ae:	4293      	cmp	r3, r2
  80014b0:	d907      	bls.n	80014c2 <_sbrk+0x3a>
-	{
-		errno = ENOMEM;
  80014b2:	f002 fe93 	bl	80041dc <__errno>
  80014b6:	4602      	mov	r2, r0
  80014b8:	230c      	movs	r3, #12
  80014ba:	6013      	str	r3, [r2, #0]
-		return (caddr_t) -1;
  80014bc:	f04f 33ff 	mov.w	r3, #4294967295	; 0xffffffff
  80014c0:	e006      	b.n	80014d0 <_sbrk+0x48>
-	}
-
-	heap_end += incr;
  80014c2:	4b05      	ldr	r3, [pc, #20]	; (80014d8 <_sbrk+0x50>)
  80014c4:	681a      	ldr	r2, [r3, #0]
  80014c6:	687b      	ldr	r3, [r7, #4]
  80014c8:	4413      	add	r3, r2
  80014ca:	4a03      	ldr	r2, [pc, #12]	; (80014d8 <_sbrk+0x50>)
  80014cc:	6013      	str	r3, [r2, #0]
-
-	return (caddr_t) prev_heap_end;
  80014ce:	68fb      	ldr	r3, [r7, #12]
-}
  80014d0:	4618      	mov	r0, r3
  80014d2:	3710      	adds	r7, #16
  80014d4:	46bd      	mov	sp, r7
@@ -2904,99 +2880,45 @@ void SystemInit(void)
  8001508:	e000ed00 	.word	0xe000ed00
 
 0800150c <Reset_Handler>:
-
-    .section  .text.Reset_Handler
-  .weak  Reset_Handler
-  .type  Reset_Handler, %function
-Reset_Handler:  
-  ldr   sp, =_estack      /* set stack pointer */
  800150c:	f8df d034 	ldr.w	sp, [pc, #52]	; 8001544 <LoopFillZerobss+0x14>
-
-/* Copy the data segment initializers from flash to SRAM */  
-  movs  r1, #0
  8001510:	2100      	movs	r1, #0
-  b  LoopCopyDataInit
  8001512:	e003      	b.n	800151c <LoopCopyDataInit>
 
 08001514 <CopyDataInit>:
-
-CopyDataInit:
-  ldr  r3, =_sidata
  8001514:	4b0c      	ldr	r3, [pc, #48]	; (8001548 <LoopFillZerobss+0x18>)
-  ldr  r3, [r3, r1]
  8001516:	585b      	ldr	r3, [r3, r1]
-  str  r3, [r0, r1]
  8001518:	5043      	str	r3, [r0, r1]
-  adds  r1, r1, #4
  800151a:	3104      	adds	r1, #4
 
 0800151c <LoopCopyDataInit>:
-    
-LoopCopyDataInit:
-  ldr  r0, =_sdata
  800151c:	480b      	ldr	r0, [pc, #44]	; (800154c <LoopFillZerobss+0x1c>)
-  ldr  r3, =_edata
  800151e:	4b0c      	ldr	r3, [pc, #48]	; (8001550 <LoopFillZerobss+0x20>)
-  adds  r2, r0, r1
  8001520:	1842      	adds	r2, r0, r1
-  cmp  r2, r3
  8001522:	429a      	cmp	r2, r3
-  bcc  CopyDataInit
  8001524:	d3f6      	bcc.n	8001514 <CopyDataInit>
-  ldr  r2, =_sbss
  8001526:	4a0b      	ldr	r2, [pc, #44]	; (8001554 <LoopFillZerobss+0x24>)
-  b  LoopFillZerobss
  8001528:	e002      	b.n	8001530 <LoopFillZerobss>
 
 0800152a <FillZerobss>:
-/* Zero fill the bss segment. */  
-FillZerobss:
-  movs  r3, #0
  800152a:	2300      	movs	r3, #0
-  str  r3, [r2], #4
  800152c:	f842 3b04 	str.w	r3, [r2], #4
 
 08001530 <LoopFillZerobss>:
-    
-LoopFillZerobss:
-  ldr  r3, = _ebss
  8001530:	4b09      	ldr	r3, [pc, #36]	; (8001558 <LoopFillZerobss+0x28>)
-  cmp  r2, r3
  8001532:	429a      	cmp	r2, r3
-  bcc  FillZerobss
  8001534:	d3f9      	bcc.n	800152a <FillZerobss>
-
-/* Call the clock system intitialization function.*/
-  bl  SystemInit   
  8001536:	f7ff ffd3 	bl	80014e0 <SystemInit>
-/* Call static constructors */
-    bl __libc_init_array
  800153a:	f002 fe55 	bl	80041e8 <__libc_init_array>
-/* Call the application's entry point.*/
-  bl  main
  800153e:	f7ff fc57 	bl	8000df0 <main>
-  bx  lr    
  8001542:	4770      	bx	lr
-  ldr   sp, =_estack      /* set stack pointer */
  8001544:	20020000 	.word	0x20020000
-  ldr  r3, =_sidata
  8001548:	08004ce8 	.word	0x08004ce8
-  ldr  r0, =_sdata
  800154c:	20000000 	.word	0x20000000
-  ldr  r3, =_edata
  8001550:	200000e8 	.word	0x200000e8
-  ldr  r2, =_sbss
  8001554:	200000e8 	.word	0x200000e8
-  ldr  r3, = _ebss
  8001558:	200003fc 	.word	0x200003fc
 
 0800155c <ADC_IRQHandler>:
- * @retval None       
-*/
-    .section  .text.Default_Handler,"ax",%progbits
-Default_Handler:
-Infinite_Loop:
-  b  Infinite_Loop
  800155c:	e7fe      	b.n	800155c <ADC_IRQHandler>
 	...
 

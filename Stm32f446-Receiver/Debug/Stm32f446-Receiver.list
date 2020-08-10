@@ -39,11 +39,19 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   CONTENTS, READONLY, DEBUGGING
  17 .debug_line   00009052  00000000  00000000  00052b04  2**0
                   CONTENTS, READONLY, DEBUGGING
+<<<<<<< HEAD
  18 .debug_str    000ca466  00000000  00000000  0005bb56  2**0
                   CONTENTS, READONLY, DEBUGGING
  19 .comment      0000007b  00000000  00000000  00125fbc  2**0
                   CONTENTS, READONLY
  20 .debug_frame  00002c3c  00000000  00000000  00126038  2**2
+=======
+ 18 .debug_str    000ca463  00000000  00000000  0005bb56  2**0
+                  CONTENTS, READONLY, DEBUGGING
+ 19 .comment      0000007b  00000000  00000000  00125fb9  2**0
+                  CONTENTS, READONLY
+ 20 .debug_frame  00002c3c  00000000  00000000  00126034  2**2
+>>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -600,7 +608,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
  80006a0:	717b      	strb	r3, [r7, #5]
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x8C); // БЕЗ CRC
+	SPIWrite(LR_RegModemConfig1,0x8C); //8C БЕЗ CRC
  80006a2:	218c      	movs	r1, #140	; 0x8c
  80006a4:	201d      	movs	r0, #29
  80006a6:	f000 fdd7 	bl	8001258 <SPIWrite>
@@ -630,8 +638,8 @@ void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uin
  80006c0:	4613      	mov	r3, r2
  80006c2:	80bb      	strh	r3, [r7, #4]
 	//SPIWrite(LR_RegModemConfig2,((Rf96_SpreadFactorTbl[SF_value]<<4)+(PayloadCrc_value<<2)+(SymbTimeout_value>>8)));
-	SPIWrite(LR_RegModemConfig2,0x77); //67
- 80006c4:	2177      	movs	r1, #119	; 0x77
+	SPIWrite(LR_RegModemConfig2,0x74); //67
+ 80006c4:	2174      	movs	r1, #116	; 0x74
  80006c6:	201e      	movs	r0, #30
  80006c8:	f000 fdc6 	bl	8001258 <SPIWrite>
 	SPIWrite(LR_RegSymbTimeoutLsb,(uint8_t)SymbTimeout_value);
@@ -2189,9 +2197,15 @@ static void MX_GPIO_Init(void)
  800110c:	687b      	ldr	r3, [r7, #4]
 
   /*Configure GPIO pin Output Level */
+<<<<<<< HEAD
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_SET);
  800110e:	2201      	movs	r2, #1
  8001110:	2107      	movs	r1, #7
+=======
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
+ 800110e:	2201      	movs	r2, #1
+ 8001110:	210e      	movs	r1, #14
+>>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
  8001112:	4828      	ldr	r0, [pc, #160]	; (80011b4 <MX_GPIO_Init+0x12c>)
  8001114:	f000 fe5a 	bl	8001dcc <HAL_GPIO_WritePin>
 
@@ -2218,9 +2232,15 @@ static void MX_GPIO_Init(void)
  8001136:	481f      	ldr	r0, [pc, #124]	; (80011b4 <MX_GPIO_Init+0x12c>)
  8001138:	f000 fc9e 	bl	8001a78 <HAL_GPIO_Init>
 
+<<<<<<< HEAD
   /*Configure GPIO pins : PC0 PC1 PC2 */
   GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
  800113c:	2307      	movs	r3, #7
+=======
+  /*Configure GPIO pins : PC1 PC2 PC3 */
+  GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
+ 800113c:	230e      	movs	r3, #14
+>>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
  800113e:	617b      	str	r3, [r7, #20]
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
  8001140:	2301      	movs	r3, #1

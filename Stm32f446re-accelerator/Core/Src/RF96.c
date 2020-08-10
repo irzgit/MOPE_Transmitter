@@ -116,7 +116,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x8C); // Без CRC16
+	SPIWrite(LR_RegModemConfig1,0x8C); // 8C    Без CRC16
 	//SPIWrite(LR_RegModemConfig1,0x8E); // С CRC16
 	//SPIWrite(LR_RegDetectOptimize,0xC5);
 	//SPIWrite(LR_RegDetecionThreshold,0x0C);

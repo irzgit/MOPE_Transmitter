@@ -170,6 +170,7 @@ if(buff[0]==0 && buff[1]==1 && buff[2]==2 && buff[3]==3)
 	blockAddr=sector;
 }
 
+
     return USER_SPI_write(pdrv, buff, sector, count);
 
   /* USER CODE END WRITE */

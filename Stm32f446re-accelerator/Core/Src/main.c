@@ -139,6 +139,7 @@ uint8_t CountOfAccel=0;
 // время отсчета микрконтроллера в милисекундах
 uint32_t reciveTime=0;
 uint32_t reciveTime1=0;
+uint32_t reciveTime2=0;
 // Количество пакетов в очереди
 #define NumOfOrder 256
 // Буффер для очереди
@@ -171,6 +172,10 @@ uint16_t numb_sect = 0x00;
 uint8_t next_block_addr = 1;
 //  Светодиоды для sd карты
 uint8_t LedSd=0;
+//
+uint8_t time = 0;
+char minus[2] = {" \n"};
+
 
 // 1 - акселерометр с адресом 50
 // 2 - акселерометр с адресом 100
@@ -551,6 +556,7 @@ int main(void)
 			PacketToRadio();
 		}
 
+		// работа с данными, полученными с акселерометров, и секторами памяти
 		if(count_order_Minus>0)
 		{
 
@@ -563,6 +569,7 @@ int main(void)
 
 			metka=0;
 
+			// запись первого пакета, заполненного нулями
 			if(zero_first_packet==0)
 			{
 				zero_first_packet=1;
@@ -573,6 +580,7 @@ int main(void)
 				}
 			}
 
+			// парсинг данных
 			transmit(&Buf_order[count_order_Point*252],Buff_str2);
 			count_order_Point++;
 			count_order_Minus--;
@@ -600,11 +608,14 @@ int main(void)
 			fres = f_sync(&fil);
 
 			*/
-			uint32_t spot=SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
+
+			// запись в сектора памяти
+			SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
 			NubofByte+=2;
 			if(NubofByte==256)
 			{
 				pac += 2;
+				// расчет количества байт
 				NubofByte=0;
 				if(block_fileName[30] == 0xFF)
 				{
@@ -615,9 +626,8 @@ int main(void)
 					block_fileName[30]+=1;
 				}
 
-
-				//начальная запись в сектор
-				if(first_sector == 0)
+				// запись в первый сектор счета
+ 				if(first_sector == 0)
 				{
 					block += 1;
 					block_fileCount[4 + pac] = block;
@@ -637,8 +647,7 @@ int main(void)
 					SDCARD_WriteSingleBlock(file_count_sect2, block_fileCount);
 				} else
 				{
-					//запись в следующие секторa
-
+					// запись в следующие секторa счета
 					pac = 0;
 					block += 1;
 					block_fileCount[0 + sector] = block;
@@ -666,10 +675,11 @@ int main(void)
 				}
 			}
 
-
+			// запись количества байт в сектор
 			block_fileName[29]=NubofByte;
-
 			SDCARD_WriteSingleBlock(file_name_sect, block_fileName);
+
+			LedSd=0;
 			/// Нужно удалить
 			countT++;
 			if(countT==200)
@@ -1169,6 +1179,7 @@ static void MX_GPIO_Init(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+	// прием и запись данных с акселерометров
 	if(huart==&huart3)
 	{
 		HAL_TIM_Base_Stop_IT(&htim6);
@@ -1236,9 +1247,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		UsartCount=0;
 
-		reciveTime = HAL_GetTick();
+		// добавление метки времени
+		if(time == 0){
+			reciveTime = HAL_GetTick();
+			uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
+			time = 1;
+		} else
+		{
+			reciveTime2 = HAL_GetTick();
+			uint32_TO_charmass(reciveTime2, Buff_Top, CountOfAccel*36, 8);
+			time = 0;
+			if(reciveTime2 - reciveTime > 2)
+			{
+				minus[0] = (reciveTime2 - reciveTime) + '0';
+//				HAL_UART_Transmit_IT(&huart2, (uint8_t*)minus, 2);
+			}
+		}
 
-		uint32_TO_charmass(reciveTime, Buff_Top, CountOfAccel*36, 8);
 		for(uint8_t i=0;i<9;i++)
 		{
 			Buff_Top[i+9+36*CountOfAccel]=packageCut[0][i];
@@ -1269,6 +1294,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			CountOfAccel=0;
 			metka=1;
 
+			// отключение светодиодов при извлечений флешки
 			if(LedSd==1 && (HAL_GetTick() - reciveTime1 > 500))
 			{
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
@@ -1294,7 +1320,7 @@ void HAL_UART_TxCpltCallback(UART_HandleTypeDef *huart)
 
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-
+	// включение и отключение светодиодов при подключении и отключении акселерометров
 	if(htim==&htim6)
 	{
 		TIM6->CNT=0;

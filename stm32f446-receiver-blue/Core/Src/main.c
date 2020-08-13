@@ -33,7 +33,7 @@ uint8_t Buff_rx[70];
 uint8_t Buff_tx[20];
 uint8_t str[29];
 uint32_t reciveTime=0;
-uint8_t UsartStatus=0;
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -92,39 +92,40 @@ static void MX_USART6_UART_Init(void);
 // Настройка на передачу
 void WMSM42InitTX(void)
 {
-	  HAL_Delay(3000);
-	  HAL_UART_Abort(&huart6);
-	  HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100);
-	  HAL_UART_Receive(&huart6, Buff_rx, 10,100);
+	HAL_Delay(3000);
+	HAL_UART_Abort(&huart6);
+	HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100);
+	HAL_UART_Receive(&huart6, Buff_rx, 10,100);
 
-	  memset(Buff_rx, 0, sizeof(Buff_rx));
+	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
 	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
 	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_com3_TX_mode, sizeof(buf_com3_TX_mode),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_com3_TX_mode, sizeof(buf_com3_TX_mode),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
-	  HAL_Delay(300);
-	  // Отправка посылки
-	  memset(Buff_rx, 0, sizeof(Buff_rx));
-	  while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
-	  {
-		  HAL_UART_Transmit(&huart6, buf_com_Tx, sizeof(buf_com_Tx),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
-	  }
+	HAL_Delay(300);
 
-	  HAL_UART_Receive_IT(&huart6, Buff_rx,11);
+	// Отправка посылки
+	memset(Buff_rx, 0, sizeof(Buff_rx));
+	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
+	{
+		HAL_UART_Transmit(&huart6, buf_com_Tx, sizeof(buf_com_Tx),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+	}
+
+	HAL_UART_Receive_IT(&huart6, Buff_rx,11);
 
 }
 
@@ -132,49 +133,49 @@ void WMSM42InitTX(void)
 void WMSM42InitRX(void)
 {
 
-	  HAL_Delay(3000);
-	  HAL_UART_Abort(&huart6);
-	  HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100);
-	  HAL_UART_Receive(&huart6, Buff_rx, 10,100);
-
-	  memset(Buff_rx, 0, sizeof(Buff_rx));
-	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
-	{
-		  HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
-	}
-	memset(Buff_rx, 0, sizeof(Buff_rx));
-	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
-	{
-		  HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
-	}
+	HAL_Delay(3000);
+	HAL_UART_Abort(&huart6);
+	HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100);
+	HAL_UART_Receive(&huart6, Buff_rx, 10,100);
 
 	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_com3_RX_mode, sizeof(buf_com3_RX_mode),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+	}
+	memset(Buff_rx, 0, sizeof(Buff_rx));
+	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
+	{
+		HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+	}
+
+	memset(Buff_rx, 0, sizeof(Buff_rx));
+	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
+	{
+		HAL_UART_Transmit(&huart6, buf_com3_RX_mode, sizeof(buf_com3_RX_mode),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
 	// Запись в регистр длины посылки
-	  memset(Buff_rx, 0, sizeof(Buff_rx));
+	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
 	// Запись в регистр длины преамбулы
-	  memset(Buff_rx, 0, sizeof(Buff_rx));
+	memset(Buff_rx, 0, sizeof(Buff_rx));
 	while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
 	{
-		  HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
+		HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100);
+		HAL_UART_Receive(&huart6, Buff_rx, 7,100);
 	}
 
 
 	memset(Buff_rx, 0, sizeof(Buff_rx));
 
-	  HAL_UART_Receive_DMA(&huart6, Buff_rx, 62+4);
+	HAL_UART_Receive_DMA(&huart6, Buff_rx, 62+4);
 
 }
 
@@ -268,13 +269,8 @@ void transmit(uint8_t str[27])
 					zvalThird[0] = '-';
 
 			sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
-	//HAL_UART_Abort(&huart2);
-			if(UsartStatus==HAL_BUSY)
-			{
-			//	HAL_UART_Abort(&huart2);
-			//	HAL_UART_Init(&huart2);
-			}
-			UsartStatus=HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
+
+			HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
 
 
 
@@ -317,20 +313,20 @@ void Mass_toData8(uint8_t *pcBlock,uint8_t* data8, unsigned short len) //rx_buff
 	int x = 0;
 	for(uint8_t j=0;j<len;j++)
 	{
-	for (int i = 0; i < 2; i++)
-	{
-		if (pcBlock[2 - i - 1+j*2] > 57)
+		for (int i = 0; i < 2; i++)
 		{
-			x = (pcBlock[2 - i - 1+j*2] - 55);
+			if (pcBlock[2 - i - 1+j*2] > 57)
+			{
+				x = (pcBlock[2 - i - 1+j*2] - 55);
+			}
+			else
+			{
+				x = (pcBlock[2 - i - 1+j*2] - 48);
+			}
+			sum += x * powx(16, i);
 		}
-		else
-		{
-			x = (pcBlock[2 - i - 1+j*2] - 48);
-		}
-		sum += x * powx(16, i);
-	}
-	data8[j]=sum;
-	sum=0;
+		data8[j]=sum;
+		sum=0;
 	}
 
 }
@@ -629,18 +625,18 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 
 
-	if(Buff_rx[0]!=0)
-	{
-		reciveTime=HAL_GetTick();
-		Mass_toData8(&Buff_rx[6],str,29);
-		CRC_c=(str[27]<<8)+(str[28]);
-		if(Crc16(str, 27)==CRC_c)
+		if(Buff_rx[0]!=0)
 		{
-			readFlag=1;
-		}
-		//	HAL_UART_Receive_DMA(&huart6, Buff_rx, 62);
+			reciveTime=HAL_GetTick();
+			Mass_toData8(&Buff_rx[6],str,29);
+			CRC_c=(str[27]<<8)+(str[28]);
+			if(Crc16(str, 27)==CRC_c)
+			{
+				readFlag=1;
+			}
+			//	HAL_UART_Receive_DMA(&huart6, Buff_rx, 62);
 
-	}
+		}
 
 	}
 

@@ -182,7 +182,6 @@ char minus[2] = {" \n"};
 // 3 - акселерометр с адресом 150
 uint8_t accelSelect[3][5] = {{0x68, 0x04, 0x32, 0x04, 0x3a},{0x68, 0x04, 0x64, 0x04, 0x6c},{0x68, 0x04, 0x96, 0x04, 0x9e}};
 
-uint32_t countT=0;
 
 
 // Таблица CRC16
@@ -456,7 +455,6 @@ int main(void)
   MX_TIM7_Init();
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
-
 	// Заполнение секторов нулями
 	for(uint16_t i=92;i<512;i++)
 	{
@@ -469,9 +467,9 @@ int main(void)
 	Rf96_Lora_TX_mode();
 
     // Запуск приема в дма с аксселерометров
-    HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
-	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14);
-	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
+    HAL_UART_Receive_DMA(&huart3, &package[0][0], 14); //ак2
+	HAL_UART_Receive_DMA(&huart5, &package[1][0], 14); // ак3
+	HAL_UART_Receive_DMA(&huart1, &package[2][0], 14); // ак1
 
     // Отправка первого нулевого пакета
 	PacketToRadio();
@@ -529,31 +527,13 @@ int main(void)
   while (1)
   {
 
-      /*
-	  if(HAL_GPIO_ReadPin(GPIOC,GPIO_PIN_13)==RESET)
-	  {
-		  //Close file, don't forget this!
-		  //HAL_Delay(10);
-		   f_close(&fil);
-		  // HAL_Delay(5);
-		   //De-mount drive
-		  f_mount(NULL, "", 0);
-		  while(1)
-		  {
-		  //HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_SET);
-		  HAL_Delay(500);
-		//  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1, GPIO_PIN_RESET);
-		  HAL_Delay(500);
-		  }
-	  }
-	  */
 		// Синхронизация
 		SyncAccel();
 
 		// отправка по радиоканалу
 		if(Get_NIRQ_Di0())
 		{
-			PacketToRadio();
+		PacketToRadio();
 		}
 
 		// работа с данными, полученными с акселерометров, и секторами памяти
@@ -592,22 +572,6 @@ int main(void)
 			Buff_str2[510]=';';
 			Buff_str2[511]='\n';
 
-
-			// Запись на SD 2 буфера
-			/*
-			fres = f_write(&fil, &Buff_str2, sizeof(Buff_str2), &bytesWrote);
-			if (fres != FR_OK)
-			{
-			while(1)
-			{
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-			}
-			}
-			fres = f_sync(&fil);
-
-			*/
 
 			// запись в сектора памяти
 			SDCARD_WriteSingleBlock(blockAddr++, Buff_str2);
@@ -680,12 +644,7 @@ int main(void)
 			SDCARD_WriteSingleBlock(file_name_sect, block_fileName);
 
 			LedSd=0;
-			/// Нужно удалить
-			countT++;
-			if(countT==200)
-			{
-				countT=0;
-			}
+
 
 		}
 
@@ -1109,7 +1068,7 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOA, acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|acel1_1_Pin|acel1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|acel2_Pin|acel2_2_Pin|GPIO_PIN_6, GPIO_PIN_RESET);
@@ -1140,8 +1099,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PC4 acel1_Pin acel1_1_Pin */
-  GPIO_InitStruct.Pin = GPIO_PIN_4|acel1_Pin|acel1_1_Pin;
+  /*Configure GPIO pins : PC4 acel1_1_Pin acel1_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_4|acel1_1_Pin|acel1_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1180,12 +1139,12 @@ static void MX_GPIO_Init(void)
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	// прием и запись данных с акселерометров
-	if(huart==&huart3)
+	if(huart==&huart3)  // АК2, светодиод 2
 	{
 		HAL_TIM_Base_Stop_IT(&htim6);
 		TIM6->CNT=0;
 		if(LedMode==0)
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 		if(package[0][0]!=0x68)
 		{
 			readFlag=1;
@@ -1201,12 +1160,12 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		HAL_TIM_Base_Start_IT(&htim6);
 	}
 
-	if(huart==&huart1)
+	if(huart==&huart1)  // АК1, светодиод 1
 	{
 		HAL_TIM_Base_Stop_IT(&htim7);
 		TIM7->CNT=0;
 		if(LedMode==0)
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 		if(package[2][0]!=0x68)
 		{
 			readFlag2=1;
@@ -1222,7 +1181,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		HAL_TIM_Base_Start_IT(&htim7);
 	}
 
-	if(huart==&huart5)
+	if(huart==&huart5)  // АК3, светодиод 3
 	{
 		HAL_TIM_Base_Stop_IT(&htim10);
 		TIM10->CNT=0;
@@ -1326,7 +1285,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		TIM6->CNT=0;
 		memset(packageCut[0],0,9);
 		HAL_TIM_Base_Start_IT(&htim6);
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 		HAL_UART_Abort(&huart3);
 		HAL_UART_Receive_DMA(&huart3, &package[0][0], 14);
 	}
@@ -1335,7 +1294,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		TIM7->CNT=0;
 		memset(packageCut[2],0,9);
 		HAL_TIM_Base_Start_IT(&htim7);
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		HAL_UART_Abort(&huart1);
 		HAL_UART_Receive_DMA(&huart1, &package[2][0], 14);
 	}

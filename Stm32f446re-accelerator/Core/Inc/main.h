@@ -73,10 +73,10 @@ void Error_Handler(void);
 #define acel2_GPIO_Port GPIOB
 #define acel2_2_Pin GPIO_PIN_14
 #define acel2_2_GPIO_Port GPIOB
-#define acel1_Pin GPIO_PIN_6
-#define acel1_GPIO_Port GPIOC
 #define acel1_1_Pin GPIO_PIN_8
 #define acel1_1_GPIO_Port GPIOC
+#define acel1_Pin GPIO_PIN_9
+#define acel1_GPIO_Port GPIOC
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14

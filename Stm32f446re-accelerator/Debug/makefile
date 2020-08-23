@@ -31,6 +31,12 @@ endif
 ifneq ($(strip $(CXX_DEPS)),)
 -include $(CXX_DEPS)
 endif
+ifneq ($(strip $(S_DEPS)),)
+-include $(S_DEPS)
+endif
+ifneq ($(strip $(S_UPPER_DEPS)),)
+-include $(S_UPPER_DEPS)
+endif
 ifneq ($(strip $(C_DEPS)),)
 -include $(C_DEPS)
 endif
@@ -59,8 +65,8 @@ Stm32f446re-accelerator.bin \
 all: Stm32f446re-accelerator.elf secondary-outputs
 
 # Tool invocations
-Stm32f446re-accelerator.elf: $(OBJS) $(USER_OBJS) /home/user/Рабочий\ стол/MOPE_Transmitter/Stm32f446re-accelerator/STM32F446RETX_FLASH.ld
-	arm-none-eabi-g++ -o "Stm32f446re-accelerator.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/user/Рабочий стол/MOPE_Transmitter/Stm32f446re-accelerator/STM32F446RETX_FLASH.ld" -Wl,-Map="Stm32f446re-accelerator.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Stm32f446re-accelerator.elf: $(OBJS) $(USER_OBJS) D:\Projects\MOPE_Transmitter\Stm32f446re-accelerator\STM32F446RETX_FLASH.ld
+	arm-none-eabi-g++ -o "Stm32f446re-accelerator.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\Projects\MOPE_Transmitter\Stm32f446re-accelerator\STM32F446RETX_FLASH.ld" -Wl,-Map="Stm32f446re-accelerator.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

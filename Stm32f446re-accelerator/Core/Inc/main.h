@@ -69,10 +69,14 @@ void Error_Handler(void);
 #define USART_RX_GPIO_Port GPIOA
 #define acel3_3_Pin GPIO_PIN_4
 #define acel3_3_GPIO_Port GPIOA
+#define SSV_Pin GPIO_PIN_12
+#define SSV_GPIO_Port GPIOB
 #define acel2_Pin GPIO_PIN_13
 #define acel2_GPIO_Port GPIOB
 #define acel2_2_Pin GPIO_PIN_14
 #define acel2_2_GPIO_Port GPIOB
+#define Motor_Pin GPIO_PIN_15
+#define Motor_GPIO_Port GPIOB
 #define acel1_Pin GPIO_PIN_6
 #define acel1_GPIO_Port GPIOC
 #define acel1_1_Pin GPIO_PIN_8

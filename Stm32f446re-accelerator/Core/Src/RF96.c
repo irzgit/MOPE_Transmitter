@@ -116,7 +116,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x8C); // 8C    Без CRC16
+	SPIWrite(LR_RegModemConfig1,0x25); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
 	//SPIWrite(LR_RegModemConfig1,0x8E); // С CRC16
 	//SPIWrite(LR_RegDetectOptimize,0xC5);
 	//SPIWrite(LR_RegDetecionThreshold,0x0C);
@@ -128,7 +128,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uint16_t SymbTimeout_value)
 {
 	//SPIWrite(LR_RegModemConfig2,((Rf96_SpreadFactorTbl[SF_value]<<4)+(PayloadCrc_value<<2)+(SymbTimeout_value>>8)));
-	SPIWrite(LR_RegModemConfig2,0x74);
+	SPIWrite(LR_RegModemConfig2,0xC4);  // SF=12
 	SPIWrite(LR_RegSymbTimeoutLsb,(uint8_t)SymbTimeout_value);
 }
 //Устанавливаем длину преамбулы в байтах: 4+PreambLen_value
@@ -265,7 +265,7 @@ void Rf96_Lora_TX_mode(void)
 	  // Снимаем маску с прерывания по TX
 	  Rf96_irqMaskTX();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(29);
+	  Rf96_PayloadLength(41);
 	  // Установка адреса TX в буфере FIFO
 	  Rf96_TX_FifoAdr(0x80);
 	  // Устанавливает указатель на адрес начала массива TX в FIFO
@@ -276,17 +276,17 @@ void Rf96_Lora_TX_mode(void)
 void Rf96_Lora_RX_mode(void)
 {
 	  //RAK811antRx();
-	//  SPIWrite(REG_LR_PADAC,0x84);                            //Normal and Rx
+	//  SPIWrite(0x5A,0x87);                            //Normal and Rx
 	//  SPIWrite(LR_RegHopPeriod,0xFF);   //??????                       //RegHopPeriod NO FHSS
-	  SPIWrite(LR_RegHopPeriod,0x00);   //??????
+	  SPIWrite(LR_RegHopPeriod,0x0);   //??????
 	  // Настройка вывода Di0 на прерывание по приему, Di1 на прерывание по таймауту
-	  Rf96_PinOut_Di0_Di1(0,0);
+	  Rf96_PinOut_Di0_Di1_Di2_Di3(0,0,0,2);
 	  // Снимаем маску с прерывания по RX
 	  Rf96_irqMaskRX();
 	  // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(29);
+	  Rf96_PayloadLength(41);
       // Установка адреса RX в буфере FIFO
 	  Rf96_RX_FifoAdr(0x00);
 	  // Устанавливает указатель на адрес начала массива RX в FIFO
@@ -307,7 +307,7 @@ void Rf96_LoRaTxPacket(char* Str, uint8_t LenStr)
 
 
 	// Ждем пока появится прерывание
-/*
+
 	while(1)
 	{
 		if(Get_NIRQ_Di0())
@@ -320,7 +320,7 @@ void Rf96_LoRaTxPacket(char* Str, uint8_t LenStr)
 			break;
 		}
 	}
-*/
+
 
 }
 // Прием пакета данных

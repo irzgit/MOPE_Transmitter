@@ -27,15 +27,9 @@ Mcu.Pin20=PB6
 Mcu.Pin21=VP_SYS_VS_Systick
 Mcu.Pin3=PH0-OSC_IN
 Mcu.Pin4=PH1-OSC_OUT
-<<<<<<< HEAD
-Mcu.Pin5=PC0
-Mcu.Pin6=PC1
-Mcu.Pin7=PC2
-=======
 Mcu.Pin5=PC1
 Mcu.Pin6=PC2
 Mcu.Pin7=PC3
->>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
 Mcu.Pin8=PA0-WKUP
 Mcu.Pin9=PA2
 Mcu.PinsNb=22
@@ -94,13 +88,6 @@ PB5.Locked=true
 PB5.Signal=GPIO_Input
 PB6.Locked=true
 PB6.Signal=GPIO_Output
-<<<<<<< HEAD
-PC0.GPIOParameters=PinState
-PC0.Locked=true
-PC0.PinState=GPIO_PIN_SET
-PC0.Signal=GPIO_Output
-=======
->>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
 PC1.GPIOParameters=PinState
 PC1.Locked=true
 PC1.PinState=GPIO_PIN_SET
@@ -120,13 +107,10 @@ PC2.GPIOParameters=PinState
 PC2.Locked=true
 PC2.PinState=GPIO_PIN_SET
 PC2.Signal=GPIO_Output
-<<<<<<< HEAD
-=======
 PC3.GPIOParameters=PinState
 PC3.Locked=true
 PC3.PinState=GPIO_PIN_SET
 PC3.Signal=GPIO_Output
->>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
 PH0-OSC_IN.Locked=true
 PH0-OSC_IN.Mode=HSE-External-Oscillator
 PH0-OSC_IN.Signal=RCC_OSC_IN
@@ -148,7 +132,7 @@ ProjectManager.FreePins=false
 ProjectManager.HalAssertFull=false
 ProjectManager.HeapSize=0x200
 ProjectManager.KeepUserCode=true
-ProjectManager.LastFirmware=true
+ProjectManager.LastFirmware=false
 ProjectManager.LibraryCopy=1
 ProjectManager.MainLocation=Core/Src
 ProjectManager.NoMain=false
@@ -218,7 +202,7 @@ SPI1.Direction=SPI_DIRECTION_2LINES
 SPI1.IPParameters=VirtualType,Mode,Direction,CalculateBaudRate,BaudRatePrescaler
 SPI1.Mode=SPI_MODE_MASTER
 SPI1.VirtualType=VM_MASTER
-USART2.BaudRate=230400
+USART2.BaudRate=9600
 USART2.IPParameters=VirtualMode,BaudRate
 USART2.VirtualMode=VM_ASYNC
 VP_SYS_VS_Systick.Mode=SysTick

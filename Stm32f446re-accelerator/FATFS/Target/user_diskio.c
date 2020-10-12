@@ -44,12 +44,6 @@
 /* Private variables ---------------------------------------------------------*/
 /* Disk status */
 static volatile DSTATUS Stat = STA_NOINIT;
-
-
-extern uint32_t file_name_sect=0;//2688
-extern uint32_t file_count_sect1=0; //2176
-extern uint32_t file_count_sect2=0;// 2432
-extern uint32_t blockAddr = 0;//2816
 /* USER CODE END DECL */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -144,31 +138,6 @@ DRESULT USER_write (
 { 
   /* USER CODE BEGIN WRITE */
   /* USER CODE HERE */
-	uint8_t mass[512];
-	for(uint16_t i=0;i<512;i++)
-	{
-		mass[i]=buff[i];
-	}
-if(buff[0]==0xF8 && buff[1]==0xFF && buff[2]==0xFF && buff[3]==0xFF)
-{
-	if(file_count_sect1==0)
-	{
-		file_count_sect1=sector;
-	}
-	else
-	{
-		file_count_sect2=sector;
-	}
-}
-if(buff[0]=='D'&& buff[1]=='A' && buff[2]=='T' && buff[3]=='A' )
-{
-	file_name_sect=sector;
-}
-if(buff[0]==0 && buff[1]==1 && buff[2]==2 && buff[3]==3)
-{
-
-	blockAddr=sector;
-}
 
 
     return USER_SPI_write(pdrv, buff, sector, count);

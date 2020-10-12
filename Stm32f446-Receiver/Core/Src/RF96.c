@@ -116,7 +116,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x8C); //8C БЕЗ CRC
+	SPIWrite(LR_RegModemConfig1,0x25); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
 	//SPIWrite(LR_RegModemConfig1,0x8E); // с CRC
 	//SPIWrite(LR_RegDetectOptimize,0xC5); // Только для sf=6
 	//SPIWrite(LR_RegDetecionThreshold,0x0C); // Только для sf=6
@@ -128,7 +128,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uint16_t SymbTimeout_value)
 {
 	//SPIWrite(LR_RegModemConfig2,((Rf96_SpreadFactorTbl[SF_value]<<4)+(PayloadCrc_value<<2)+(SymbTimeout_value>>8)));
-	SPIWrite(LR_RegModemConfig2,0x74); //67
+	SPIWrite(LR_RegModemConfig2,0xC4);  // SF=12
 	SPIWrite(LR_RegSymbTimeoutLsb,(uint8_t)SymbTimeout_value);
 }
 //Устанавливаем длину преамбулы в байтах: 4+PreambLen_value
@@ -266,7 +266,7 @@ void Rf96_Lora_TX_mode(void)
 	  // Снимаем маску с прерывания по TX
 	  Rf96_irqMaskTX();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(29);
+	  Rf96_PayloadLength(41);
 	  // Установка адреса TX в буфере FIFO
 	  Rf96_TX_FifoAdr(0x80);
 	  // Устанавливает указатель на адрес начала массива TX в FIFO
@@ -287,7 +287,7 @@ void Rf96_Lora_RX_mode(void)
 	  // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(29);
+	  Rf96_PayloadLength(41);
       // Установка адреса RX в буфере FIFO
 	  Rf96_RX_FifoAdr(0x00);
 	  // Устанавливает указатель на адрес начала массива RX в FIFO

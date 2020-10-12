@@ -28,7 +28,12 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+// Индекс комманды в массиве, пришедшего по радиоканалу
+#define CommIndex 0
+// Количество элементов в массиве для радиопередачи
+#define RadioMaxBuff 41
+// Количество элементов, приходящих с ЦКТ
+#define MaxBuffOfCKT 43
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -55,124 +60,23 @@ static void MX_GPIO_Init(void);
 static void MX_SPI1_Init(void);
 static void MX_USART2_UART_Init(void);
 /* USER CODE BEGIN PFP */
-//первый акселерометр
-int xIntSumFirst, yIntSumFirst, zIntSumFirst;
-int x5First, x60First, x65First, y8First, y90First, y95First, z11First, z120First, z125First;
-char xvalFirst[7], yvalFirst[7], zvalFirst[7];
-
-//второй акслерометр
-int xIntSumSecond, yIntSumSecond, zIntSumSecond;
-int x5Second, x60Second, x65Second, y8Second, y90Second, y95Second, z11Second, z120Second, z125Second;
-char xvalSecond[7], yvalSecond[7], zvalSecond[7];
-
-//третий акселерометр
-int xIntSumThird, yIntSumThird, zIntSumThird;
-int x5Third, x60Third, x65Third, y8Third, y90Third, y95Third, z11Third, z120Third, z125Third;
-char xvalThird[7], yvalThird[7], zvalThird[7], str1[67];
 uint16_t CRC_c=0;
-uint8_t TX_RX_Radio[60];
+// Массив приемопередачи по радиоканалу
+uint8_t TX_RX_Radio[RadioMaxBuff];
+// Буффер TX usart2
+uint8_t BuffTx[MaxBuffOfCKT];
+// Буффер RX usart2
+uint8_t BuffRx[MaxBuffOfCKT];
+// Счетчик количества пришедших байт с linux
+ uint8_t countRx=0;
+// Переменная для получения 1 байта, пришедшего по usartу
+ uint8_t data=0;
+ // Маркер того, что пришли новые данные с usart
+ uint8_t Readflag=0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
-
-
-
-void transmit(uint8_t str[27])
-{
-
-				// первый акселерометр
-				// Ось Х
-				xIntSumFirst = (str[0] & 0x0F) * 10 + (str[1] >> 4); // целочисленная сумма X
-				x5First = str[1] & 0x0F; //перевод правого бита 5го байта
-				x60First = str[2] >> 4; //перевод левого бита 6го байта
-				x65First = str[2] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalFirst, "+%02d.%d%d ",xIntSumFirst, x5First, x60First);
-				if((str[0] >> 4) == 0x01)
-					xvalFirst[0] = '-';
-
-				// Ось Y
-				yIntSumFirst = (str[3] & 0x0F) * 10 + (str[4] >> 4);	// целочисленная сумма Y
-				y8First = str[4] & 0x0F; //перевод правого бита 8го байта
-				y90First = str[5] >> 4; //перевод левого бита 9го байта
-				y95First = str[5] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalFirst, "+%02d.%d%d ", yIntSumFirst, y8First, y90First);
-				if((str[3] >> 4) == 0x01)
-					yvalFirst[0] = '-';
-
-				// Ось Z
-				zIntSumFirst = (str[6] & 0x0F) * 10 + (str[7] >> 4); //целочисленная сумма Z
-				z11First = str[7] & 0x0F; //перевод правого бита 11го байта
-				z120First = str[8] >> 4; //перевод левого бита 12го байта
-				z125First = str[8] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalFirst, "+%02d.%d%d ", zIntSumFirst, z11First, z120First);
-				if((str[6] >> 4) == 0x01)
-					zvalFirst[0] = '-';
-
-				// второй акселерометр
-				// Ось Х
-				xIntSumSecond = (str[9] & 0x0F) * 10 + (str[10] >> 4); // целочисленная сумма X
-				x5Second = str[10] & 0x0F; //перевод правого бита 5го байта
-				x60Second = str[11] >> 4; //перевод левого бита 6го байта
-				x65Second = str[11] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalSecond, "+%02d.%d%d ",xIntSumSecond, x5Second, x60Second);
-				if((str[9] >> 4) == 0x01)
-					xvalSecond[0] = '-';
-
-				// Ось Y
-				yIntSumSecond = (str[12] & 0x0F) * 10 + (str[13] >> 4);	// целочисленная сумма Y
-				y8Second = str[13] & 0x0F; //перевод правого бита 8го байта
-				y90Second = str[14] >> 4; //перевод левого бита 9го байта
-				y95Second = str[14] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalSecond, "+%02d.%d%d ", yIntSumSecond, y8Second, y90Second);
-				if((str[12] >> 4) == 0x01)
-					yvalSecond[0] = '-';
-
-				// Ось Z
-				zIntSumSecond = (str[15] & 0x0F) * 10 + (str[16] >> 4); //целочисленная сумма Z
-				z11Second = str[16] & 0x0F; //перевод правого бита 11го байта
-				z120Second = str[17] >> 4; //перевод левого бита 12го байта
-				z125Second = str[17] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalSecond, "+%02d.%d%d ", zIntSumSecond, z11Second, z120Second);
-				if((str[15] >> 4) == 0x01)
-					zvalSecond[0] = '-';
-
-				// третий акселерометр
-				// Ось Х
-				xIntSumThird = (str[18] & 0x0F) * 10 + (str[19] >> 4); // целочисленная сумма X
-				x5Third = str[19] & 0x0F; //перевод правого бита 5го байта
-				x60Third = str[20] >> 4; //перевод левого бита 6го байта
-				x65Third = str[20] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalThird, "+%02d.%d%d ",xIntSumThird, x5Third, x60Third);
-				if((str[18] >> 4) == 0x01)
-					xvalThird[0] = '-';
-
-				// Ось Y
-				yIntSumThird = (str[21] & 0x0F) * 10 + (str[22] >> 4);	// целочисленная сумма Y
-				y8Third = str[22] & 0x0F; //перевод правого бита 8го байта
-				y90Third = str[23] >> 4; //перевод левого бита 9го байта
-				y95Third = str[23] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalThird, "+%02d.%d%d ", yIntSumThird, y8Third, y90Third);
-				if((str[21] >> 4) == 0x01)
-					yvalThird[0] = '-';
-
-				// Ось Z
-				zIntSumThird = (str[24] & 0x0F) * 10 + (str[25] >> 4); //целочисленная сумма Z
-				z11Third = str[25] & 0x0F; //перевод правого бита 11го байта
-				z120Third = str[26] >> 4; //перевод левого бита 12го байта
-				z125Third = str[26] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalThird, "+%02d.%d%d ", zIntSumThird, z11Third, z120Third);
-				if((str[24] >> 4) == 0x01)
-					zvalThird[0] = '-';
-
-			sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
-	HAL_UART_Abort(&huart2);
-	HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
-
-
-
-}
-
 
 // Таблица CRC16
 const unsigned short Crc16Table[256] = {
@@ -253,14 +157,26 @@ int main(void)
   MX_SPI1_Init();
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
+  // Инициализация lora sx1272
   Rf96_Lora_init();
+  // Вход в режим приема
   Rf96_Lora_RX_mode();
+  // Запуск приема команд с Linux
+  HAL_UART_Receive_IT(&huart2, &data, 1);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+
+	  if(Readflag==1)
+	  {
+		  Readflag=0;
+		  countRx=0;
+		  HAL_UART_Receive_IT(&huart2, &data, 1);
+	  }
 
 
 
@@ -273,12 +189,12 @@ int main(void)
 	  	 	    //  Rf96_LoRaRxPacket((char*)TX_RX_Radio);
 	  	 	   Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
 
-	  	 	CRC_c=(TX_RX_Radio[27]<<8)+TX_RX_Radio[28];
+	   	   	   CRC_c=(TX_RX_Radio[27]<<8)+TX_RX_Radio[28];
 
 
               if(CRC_c==Crc16(TX_RX_Radio, 27))
               {
-            	  transmit(TX_RX_Radio);
+
               }
 /*
 	  	 	  if(Get_NIRQ_Di3()) // Если CRC не совпадает
@@ -419,7 +335,7 @@ static void MX_USART2_UART_Init(void)
 
   /* USER CODE END USART2_Init 1 */
   huart2.Instance = USART2;
-  huart2.Init.BaudRate = 230400;
+  huart2.Init.BaudRate = 9600;
   huart2.Init.WordLength = UART_WORDLENGTH_8B;
   huart2.Init.StopBits = UART_STOPBITS_1;
   huart2.Init.Parity = UART_PARITY_NONE;
@@ -452,11 +368,7 @@ static void MX_GPIO_Init(void)
   __HAL_RCC_GPIOB_CLK_ENABLE();
 
   /*Configure GPIO pin Output Level */
-<<<<<<< HEAD
-  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2, GPIO_PIN_SET);
-=======
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
->>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
@@ -467,13 +379,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(B1_GPIO_Port, &GPIO_InitStruct);
 
-<<<<<<< HEAD
-  /*Configure GPIO pins : PC0 PC1 PC2 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_1|GPIO_PIN_2;
-=======
   /*Configure GPIO pins : PC1 PC2 PC3 */
   GPIO_InitStruct.Pin = GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3;
->>>>>>> fffe31abb34f26efda0e12219baca785a1ba8599
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -501,7 +408,30 @@ static void MX_GPIO_Init(void)
 }
 
 /* USER CODE BEGIN 4 */
+// Обработчик прерываний по приему usart2
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+	  if(huart == &huart2)
+	  {
 
+		  BuffRx[countRx]=data;
+		  if(BuffRx[countRx]=='\n')
+		  {
+			  if(countRx>10)
+			  {
+				  Readflag=1;
+			  }
+
+
+		  }
+		  else
+		  {
+			  countRx++;
+		  }
+
+		  HAL_UART_Receive_IT(&huart2, &data, 1);
+	  }
+}
 /* USER CODE END 4 */
 
 /**

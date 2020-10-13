@@ -224,7 +224,7 @@ void Rf96_Lora_init(void)
 	// Выбираем полосу частот, Coding rate, и мод заголовка
 	Rf96_bandwide_CR_HeadreMod(7,4,0);
 	// Выбираем Spreading factor, включение-выключение loadCRC,Таймаут по RX
-	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x3FF);
+	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x0FF);
 	// Устанавливаем длину преамбулы
 	Rf96_Preamble(8);
 	// Заходим в StandBy
@@ -265,7 +265,7 @@ void Rf96_Lora_TX_mode(void)
 	  // Снимаем маску с прерывания по TX
 	  Rf96_irqMaskTX();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(41);
+	  Rf96_PayloadLength(42);
 	  // Установка адреса TX в буфере FIFO
 	  Rf96_TX_FifoAdr(0x80);
 	  // Устанавливает указатель на адрес начала массива TX в FIFO
@@ -286,7 +286,7 @@ void Rf96_Lora_RX_mode(void)
 	  // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Устанавливаем длину передаваемых данных (в байтах)
-	  Rf96_PayloadLength(41);
+	  Rf96_PayloadLength(42);
       // Установка адреса RX в буфере FIFO
 	  Rf96_RX_FifoAdr(0x00);
 	  // Устанавливает указатель на адрес начала массива RX в FIFO

@@ -71,13 +71,6 @@ DMA_HandleTypeDef hdma_usart3_rx;
  *  4) 3 светодиод горит - остается гореть после включения УСИ ПРД
  */
 
-
-
-
-
-
-
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -97,7 +90,7 @@ static void MX_TIM10_Init(void);
 // Индекс комманды в массиве, пришедшего по радиоканалу
 #define CommIndex 0
 // Количество элементов в массиве для радиопередачи
-#define RadioMaxBuff 41
+#define RadioMaxBuff 42
 // Количество элементов, приходящих с ЦКТ
 #define MaxBuffOfCKT 43
 
@@ -124,11 +117,13 @@ uint8_t ResolveSDWrite=0;
 // Готовность к записи на SD карту
 uint8_t ReadyToWrite=0;
 // Массив данных, пришедших с ЦКТ
-uint8_t BuffCkt[MaxBuffOfCKT+1];
+uint8_t BuffCkt[MaxBuffOfCKT];
 // Для синхронизации с ЦКТ
 uint8_t readFlag;
 // Переменная запроса на отправку данных по радио
 uint8_t RadioIrq=0;
+// Буфер для записи на sd карту
+uint8_t SDbufWrite[163];
 
 
 
@@ -181,6 +176,8 @@ unsigned short Crc16(unsigned char * pcBlock, unsigned short len)
 // Функция передачи по радиоканалу
 void CommandToRadio(uint8_t command)
 {
+	// Вход в режим передачи
+	 Rf96_Lora_TX_mode();
 	// Обнуляем массив
 	for(uint8_t i=0;i<RadioMaxBuff;i++)
 	{
@@ -242,7 +239,7 @@ void RXCommande1(void)
 		fres = f_mount(&FatFs, "", 1); //1=mount now
 
 		if (fres != FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 			while(1);
 		}
 		// Открываем или создаем новый файл
@@ -252,15 +249,13 @@ void RXCommande1(void)
 
 		} else
 		{
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 			while(1);
 		}
 	    ResolveSDWrite=1; // Открываем доступ к записи на SD
 
 	} else ResolveSDWrite=0; // Если доступ к записи на SD был открыт, закрываем его
-
     // Отсылаем ответ
-    Rf96_Lora_TX_mode();
     CommandToRadio(1);
     // Ожидаем команду
     Rf96_Lora_RX_mode();
@@ -271,7 +266,6 @@ void RXCommande2(void)
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	// Отсылаем ответ
-    Rf96_Lora_TX_mode();
     CommandToRadio(2);
     // Ожидаем команду
     Rf96_Lora_RX_mode();
@@ -287,7 +281,6 @@ void RXCommande3(void)
 	// Убираем единицу с двигателя
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
 	// Отсылаем ответ
-    Rf96_Lora_TX_mode();
     CommandToRadio(3);
     // Ожидаем команду
     Rf96_Lora_RX_mode();
@@ -338,6 +331,20 @@ void CheckSD(void)
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 
 }
+
+// Парсер
+void DataConv(void)
+{
+	// Запись времени в буфер
+	uint32_TO_charmass(reciveTime, SDbufWrite, 0, 8);
+	for(uint8_t i=0;i<38;i++)
+	{
+		uint32_TO_charmass(&BuffCkt[i+4], SDbufWrite, 9+i*4, 3);
+		SDbufWrite[8+i*4]=',';
+	}
+	SDbufWrite[162]='\n';
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -383,11 +390,11 @@ int main(void)
 
 	// Индикация включения УСИ ПРД
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-	HAL_Delay(100);
+	HAL_Delay(300);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-	HAL_Delay(100);
+	HAL_Delay(300);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-	HAL_Delay(100);
+	HAL_Delay(300);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 	//Проверка SD карты
@@ -438,19 +445,15 @@ int main(void)
 				case 4:   // Команда запроса данных
 					RXCommande4();
 					break;
-
-
 				}
-
 			}
-
 		}
 
 		if(ResolveSDWrite==1 && ReadyToWrite==1) //  Если разрешена запись на Sd карту и если есть что записывать
 		{
 			// Запись на SD
-	        BuffCkt[MaxBuffOfCKT+1]='\n';
-			fres = f_write(&fil, BuffCkt, MaxBuffOfCKT+1, &bytesWrote);
+			DataConv();
+			fres = f_write(&fil, SDbufWrite, 163, &bytesWrote);
 			if (fres != FR_OK)
 			{
 				while(1)
@@ -460,12 +463,14 @@ int main(void)
 
 				}
 			}
-			if(RadioIrq==1)
+			if(RadioIrq==1)  // Если пришел запрос на отправку измерений по радио
 			{
 				for(uint8_t i=0;i<RadioMaxBuff-2;i++)
 				{
-					TX_RX_Radio[i]=BuffCkt[i+4];
+					TX_RX_Radio[i+1]=BuffCkt[i+4];
 				}
+				// заносим в 1 элемент 4 команду
+				TX_RX_Radio[0]=4;
 				// Отсылаем ответ
 			    Rf96_Lora_TX_mode();
 				//Подсчет CRC16
@@ -484,7 +489,7 @@ int main(void)
 			    Rf96_Lora_RX_mode();
 				RadioIrq=0;
 			}
-			// Синхронизация
+			// Синхронизация файла и sd карты
 			fres = f_sync(&fil);
 			ReadyToWrite=0;
 		}

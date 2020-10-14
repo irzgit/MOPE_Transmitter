@@ -94,9 +94,10 @@ uint8_t BuffRx[MaxBuffOfCKT];
  uint8_t LedMode1=0;
  uint8_t LedMode2=0;
  uint8_t LedMode3=0;
-
+// Для фильтрации помех с Usart
  uint8_t ReadRdy=0;
  uint32_t reciveTime=0;
+ // Запрет/разрешение использования 4 команды
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -269,7 +270,6 @@ int main(void)
   //Rf96_Lora_RX_mode();
   // Запуск приема команд с Linux
   HAL_UART_Receive_IT(&huart2, &data, 1);
- // HAL_UART_Receive_DMA(&huart2,BuffRx,MaxBuffOfCKT);
   // Запуск таймера для работы светодиода
   HAL_TIM_Base_Start_IT(&htim6);
   /* USER CODE END 2 */
@@ -302,7 +302,7 @@ int main(void)
         	  case 1:
         		  LedMode1=1; // Режим мигания - посылка передается
         		  Resolve4com=0;
-        		  CommandToRadio(1);  // Команда начала записи: Создаем файл
+        		  CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
         		  break;
@@ -331,9 +331,24 @@ int main(void)
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
         		  break;
+        	  case 5:
+        		  LedMode1=1; // Режим мигания - посылка передается
+        		  Resolve4com=0;
+        		  CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
+  			      // Ожидаем команду
+  			      Rf96_Lora_RX_mode();
+        		  break;
+        	  case 6:
+        		  LedMode1=1; // Режим мигания - посылка передается
+        		  Resolve4com=0;
+        		  CommandToRadio(6); // Команда закрытия клапана
+  			      // Ожидаем команду
+  			      Rf96_Lora_RX_mode();
+        		  break;
+
         	  }
           }
-		  countRx=0;
+		    countRx=0;
 			HAL_UART_Abort(&huart2);
 			HAL_UART_Receive_IT(&huart2, &data, 1);
 
@@ -370,7 +385,23 @@ int main(void)
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					// Пересылаем принятый пакет на linux
+					for(uint8_t i=0;i<MaxBuffOfCKT-4;i++)
+					BuffTx[i+4]=TX_RX_Radio[i];
+					BuffTx[0]=0x7C;
+					BuffTx[1]=0x6E;
+					BuffTx[2]=0xA1;
+					BuffTx[3]=0x2C;
+					HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
 					break;
+				case 5:   // Команда закрытия файла на SD и запрет записи на SD
+					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					break;
+				case 6:  // Команда закрытия клапана
+					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					break;
+
 				}
 			}
 	  }
@@ -631,9 +662,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	  if(huart == &huart2)
 	  {
-		 // Readflag=1;
-		  //HAL_UART_Receive_DMA(&huart2,BuffRx,MaxBuffOfCKT);
-
 		  ReadRdy=1;
 		  reciveTime=HAL_GetTick();
 		  // Заносим пришедший байт в массив
@@ -647,7 +675,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			  countRx++;
 		  }
 		  HAL_UART_Receive_IT(&huart2, &data, 1);
-
 	  }
 }
 // Обработчик прерываний таймера

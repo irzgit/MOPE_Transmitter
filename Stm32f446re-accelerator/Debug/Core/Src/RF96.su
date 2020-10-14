@@ -24,7 +24,7 @@ RF96.c:188:6:Rf96_TX_mode	8	static
 RF96.c:195:6:Rf96_DataTX_to_FiFO	16	static
 RF96.c:200:6:Rf96_DataRX_From_FiFO	24	static
 RF96.c:210:6:Rf96_Lora_init	8	static
-RF96.c:258:6:Rf96_Lora_TX_mode	8	static
-RF96.c:276:6:Rf96_Lora_RX_mode	8	static
-RF96.c:301:6:Rf96_LoRaTxPacket	16	static
-RF96.c:327:6:Rf96_LoRaRxPacket	16	static
+RF96.c:260:6:Rf96_Lora_TX_mode	8	static
+RF96.c:279:6:Rf96_Lora_RX_mode	8	static
+RF96.c:304:6:Rf96_LoRaTxPacket	16	static
+RF96.c:330:6:Rf96_LoRaRxPacket	16	static

@@ -93,7 +93,8 @@ static void MX_TIM10_Init(void);
 #define RadioMaxBuff 42
 // Количество элементов, приходящих с ЦКТ
 #define MaxBuffOfCKT 43
-
+// Адрес ячейки памяти
+#define FilesAdr 0x08060000
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -105,7 +106,7 @@ FATFS FatFs;
 FIL fil;
 FRESULT fres;
 UINT bytesWrote;
-
+char scanBuff[300]={"/"};
 // время отсчета микрконтроллера в милисекундах
 uint32_t reciveTime=0;
 // CRC16
@@ -124,9 +125,49 @@ uint8_t readFlag;
 uint8_t RadioIrq=0;
 // Буфер для записи на sd карту
 uint8_t SDbufWrite[163];
+// Счетчик данного файла
+uint8_t CountFileNow=0;
+// Массив с названием файла
+const char MassFileName[10][10]=
+	{{"Data0.txt\0"},
+	{"Data1.txt\0"},
+	{"Data2.txt\0"},
+	{"Data3.txt\0"},
+	{"Data4.txt\0"},
+	{"Data5.txt\0"},
+	{"Data6.txt\0"},
+	{"Data7.txt\0"},
+	{"Data8.txt\0"},
+	{"Data9.txt\0"}};
+const char mass[10]={"Data0.txt\0"};
 
+// Функция чтения слова (8 бита) из памяти по адресу
+uint32_t Flash_Read_single8bit(uint32_t Adr)
+{
+	return *(uint8_t*)Adr;
+}
 
+// Функция записи слова(8 бита) в память
+void Flash_Write_single8bit(uint32_t Adr, uint32_t Data)
+{
+     HAL_FLASH_Unlock();
+	 HAL_FLASH_Program(FLASH_TYPEPROGRAM_BYTE,Adr,Data);
+	 HAL_FLASH_Lock();
 
+}
+// Функция очистки Flash памяти
+void flashErasePage(uint32_t sector)
+{
+
+	uint32_t secError = 0;
+	FLASH_EraseInitTypeDef EraseInitStruct;
+	EraseInitStruct.TypeErase   = FLASH_TYPEERASE_SECTORS ;
+	EraseInitStruct.Sector   = sector;
+	EraseInitStruct.NbSectors = 1;
+     HAL_FLASH_Unlock();
+     HAL_FLASHEx_Erase(&EraseInitStruct, &secError);
+	 HAL_FLASH_Lock();
+}
 // Таблица CRC16
 const unsigned short Crc16Table[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
@@ -232,35 +273,41 @@ void SyncCKT(void)
 // Команда начала записи на SD карту
 void RXCommande1(void)
 {
-	///ФЛЕШКА
-	if(ResolveSDWrite==0) // Если доступ к записи на SD был закрыт
+    // Запись в память номера файла, на котором мы находимся
+	CountFileNow=Flash_Read_single8bit(FilesAdr);
+	if(CountFileNow==0xFF || CountFileNow>=9 ) // Максимальное количество создаваемых файлов =9
 	{
+		CountFileNow=0;
+	}
+	CountFileNow++;
+	flashErasePage(7);
+	Flash_Write_single8bit(FilesAdr,CountFileNow);
+	///ФЛЕШКА
 	///  Создание файла
 		fres = f_mount(&FatFs, "", 1); //1=mount now
 
 		if (fres != FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 		}
 		// Открываем или создаем новый файл
-		fres = f_open(&fil, "Data.txt", FA_CREATE_ALWAYS | FA_WRITE);
+		fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_CREATE_ALWAYS | FA_WRITE);
 
 		if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
 
 		} else
 		{
-			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 		}
+		fres=f_close(&fil);
 	    ResolveSDWrite=1; // Открываем доступ к записи на SD
-
-	} else ResolveSDWrite=0; // Если доступ к записи на SD был открыт, закрываем его
     // Отсылаем ответ
     CommandToRadio(1);
     // Ожидаем команду
     Rf96_Lora_RX_mode();
 }
-// Команда управления клапаном
+// Команда включения клапаном
 void RXCommande2(void)
 {
 	// Подаем единицу на клапан
@@ -292,6 +339,44 @@ void RXCommande4(void)
 	RadioIrq=1;
 
 }
+// Команда начала закрытия файла на SD карте
+void RXCommande5(void)
+{
+	///ФЛЕШКА
+    // Закрываем файл
+	fres=f_close(&fil);
+	if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+	} else
+	{
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		while(1);
+	}
+	fres=f_mount(NULL, "", 0);
+	if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+	} else
+	{
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		while(1);
+	}
+    ResolveSDWrite=0; // Закрываем доступ к записи на SD
+    // Отсылаем ответ
+    CommandToRadio(5);
+    // Ожидаем команду
+    Rf96_Lora_RX_mode();
+}
+// Команда закрытия клапана
+void RXCommande6(void)
+{
+	// Подаем единицу на клапан
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
+	// Отсылаем ответ
+    CommandToRadio(6);
+    // Ожидаем команду
+    Rf96_Lora_RX_mode();
+}
+
 // Проверка SD карты на работоспособность
 void CheckSD(void)
 {
@@ -405,9 +490,9 @@ int main(void)
 	Rf96_Lora_RX_mode();
 	// Запуск приема в дма с аксселерометров
 	HAL_UART_Receive_DMA(&huart5, BuffCkt, MaxBuffOfCKT);
-	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_0, GPIO_PIN_RESET);
     // Запуск таймера с целью определения подключения ЦКТ
     HAL_TIM_Base_Start_IT(&htim10);
+    //RXCommande1();
 
 /////////////////////////////////////////////////////////////////////////
 
@@ -444,6 +529,12 @@ int main(void)
 					break;
 				case 4:   // Команда запроса данных
 					RXCommande4();
+					break;
+				case 5:   // Команда закрытия файла на SD и запрет записи на SD
+					RXCommande5();
+					break;
+				case 6:    // Команда закрытия клапана
+					RXCommande6();
 					break;
 				}
 			}
@@ -752,9 +843,9 @@ static void MX_UART5_Init(void)
   /* USER CODE END UART5_Init 1 */
   huart5.Instance = UART5;
   huart5.Init.BaudRate = 9600;
-  huart5.Init.WordLength = UART_WORDLENGTH_8B;
+  huart5.Init.WordLength = UART_WORDLENGTH_9B;
   huart5.Init.StopBits = UART_STOPBITS_1;
-  huart5.Init.Parity = UART_PARITY_NONE;
+  huart5.Init.Parity = UART_PARITY_EVEN;
   huart5.Init.Mode = UART_MODE_TX_RX;
   huart5.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart5.Init.OverSampling = UART_OVERSAMPLING_16;

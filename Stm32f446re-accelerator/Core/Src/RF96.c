@@ -116,7 +116,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x25); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
+	SPIWrite(LR_RegModemConfig1,0x0E); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
 	//SPIWrite(LR_RegModemConfig1,0x8E); // С CRC16
 	//SPIWrite(LR_RegDetectOptimize,0xC5);
 	//SPIWrite(LR_RegDetecionThreshold,0x0C);
@@ -227,6 +227,8 @@ void Rf96_Lora_init(void)
 	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x0FF);
 	// Устанавливаем длину преамбулы
 	Rf96_Preamble(8);
+	SPIWrite(0x37,0x0A);
+	SPIWrite(0x31,0xA3);
 	// Заходим в StandBy
 	Rf96_Standby();
 }
@@ -258,8 +260,9 @@ void RAK811antRx(void)
 void Rf96_Lora_TX_mode(void)
 {
 	//RAK811antTx();
+	  SPIWrite(LR_RegHopPeriod,0x0);
 	  // Настройка вывода Di0 на прерывание по отправке
-	Rf96_PinOut_Di0_Di1_Di2_Di3(1,0,0,2);
+	  Rf96_PinOut_Di0_Di1_Di2_Di3(1,0,0,2);
       // Сброс всех флагов
 	  Rf96_LoRaClearIrq();
 	  // Снимаем маску с прерывания по TX

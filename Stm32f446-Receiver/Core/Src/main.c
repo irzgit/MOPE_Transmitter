@@ -97,7 +97,8 @@ uint8_t BuffRx[MaxBuffOfCKT];
 // Для фильтрации помех с Usart
  uint8_t ReadRdy=0;
  uint32_t reciveTime=0;
- // Запрет/разрешение использования 4 команды
+ // Запрет/разрешение на отправку команд
+ uint8_t AccessRadio=0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -290,7 +291,7 @@ int main(void)
 
 
 	  // Пришла какая-то посылка по linux
-	  if(Readflag==1)
+	  if(Readflag==1 && AccessRadio==0)
 	  {
 		  Readflag=0;
 
@@ -305,6 +306,8 @@ int main(void)
         		  CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Занимаем радиоканал
+  			      AccessRadio=1;
         		  break;
         	  case 2:
         		  LedMode1=1; // Режим мигания - посылка передается
@@ -312,6 +315,8 @@ int main(void)
         		  CommandToRadio(2); // Команда открытия клапана
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Занимаем радиоканал
+  			      AccessRadio=1;
         		  break;
         	  case 3:
         		  LedMode1=1; // Режим мигания - посылка передается
@@ -319,8 +324,11 @@ int main(void)
         		  CommandToRadio(3); // Команда запуска двигателя
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Занимаем радиоканал
+  			      AccessRadio=1;
         		  break;
         	  case 4:
+        		  /*
         		  LedMode1=1; // Режим мигания - посылка передается
         		  //При первом запросе включаем прием данных, при воторном - отключаем
         		  if(Resolve4com==0)
@@ -330,6 +338,7 @@ int main(void)
         		  CommandToRadio(4); // Команда запроса данных
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      */
         		  break;
         	  case 5:
         		  LedMode1=1; // Режим мигания - посылка передается
@@ -337,6 +346,8 @@ int main(void)
         		  CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Занимаем радиоканал
+  			      AccessRadio=1;
         		  break;
         	  case 6:
         		  LedMode1=1; // Режим мигания - посылка передается
@@ -344,6 +355,8 @@ int main(void)
         		  CommandToRadio(6); // Команда закрытия клапана
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Занимаем радиоканал
+  			      AccessRadio=1;
         		  break;
 
         	  }
@@ -372,14 +385,24 @@ int main(void)
 				case 1:   // Команда начала записи: Создаем файл
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					// Посылка принята успешно, отправляем запрос на данные
+					Resolve4com=1; // Разрешение на 4 команду
+					LedMode1=1; // Режим мигания - посылка передается
+					CommandToRadio(4);
+					 // Ожидаем команду
+					Rf96_Lora_RX_mode();
 					break;
 				case 2:   // Команда открытия клапана
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+	  			      // радиоканал не занят
+	  			      AccessRadio=0;
 					break;
 				case 3:   // Команда запуска двигателя
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+	  			      // радиоканал не занят
+	  			      AccessRadio=0;
 					break;
 				case 4:   // Команда запроса данных
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
@@ -392,6 +415,16 @@ int main(void)
 					BuffTx[2]=0xA1;
 					BuffTx[3]=0x2C;
 					HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
+					// Посылка принята успешно, отправляем запрос на данные
+					if(Resolve4com==1) // Если нет запрета на 4 команду, то отправляем ее
+					{
+					 CommandToRadio(4);
+					 // Ожидаем команду
+					 Rf96_Lora_RX_mode();
+					}
+	  			     // радиоканал не занят
+	  			     AccessRadio=0;
+
 					break;
 				case 5:   // Команда закрытия файла на SD и запрет записи на SD
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
@@ -401,7 +434,6 @@ int main(void)
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					break;
-
 				}
 			}
 	  }
@@ -414,10 +446,13 @@ int main(void)
 	  	 		  // Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
 	  	 		  if(Resolve4com==1)
 	  	 		  {
+	  	 			  LedMode1=1; // Режим мигания - посылка передается
 	        		  CommandToRadio(4); // Команда запроса данных
 	  			      // Ожидаем команду
 	  			      Rf96_Lora_RX_mode();
 	  	 		  }
+  			      // радиоканал не занят
+  			      AccessRadio=0;
 
 	  	 	  }
 
@@ -675,6 +710,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			  countRx++;
 		  }
 		  HAL_UART_Receive_IT(&huart2, &data, 1);
+		  // Запрещаем 4 команду
+		  Resolve4com=0;
 	  }
 }
 // Обработчик прерываний таймера

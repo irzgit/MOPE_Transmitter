@@ -94,7 +94,7 @@ static void MX_TIM10_Init(void);
 // Количество элементов, приходящих с ЦКТ
 #define MaxBuffOfCKT 43
 // Адрес ячейки памяти
-#define FilesAdr 0x08060000
+#define FilesAdr 0x08040000
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -274,14 +274,15 @@ void SyncCKT(void)
 void RXCommande1(void)
 {
     // Запись в память номера файла, на котором мы находимся
-	CountFileNow=Flash_Read_single8bit(FilesAdr);
+
+	//CountFileNow=Flash_Read_single8bit(FilesAdr);
 	if(CountFileNow==0xFF || CountFileNow>=9 ) // Максимальное количество создаваемых файлов =9
 	{
 		CountFileNow=0;
 	}
 	CountFileNow++;
-	flashErasePage(7);
-	Flash_Write_single8bit(FilesAdr,CountFileNow);
+	//flashErasePage(FLASH_SECTOR_6);
+	//Flash_Write_single8bit(FilesAdr,CountFileNow);
 	///ФЛЕШКА
 	///  Создание файла
 		fres = f_mount(&FatFs, "", 1); //1=mount now
@@ -300,7 +301,6 @@ void RXCommande1(void)
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 		}
-		fres=f_close(&fil);
 	    ResolveSDWrite=1; // Открываем доступ к записи на SD
     // Отсылаем ответ
     CommandToRadio(1);
@@ -813,7 +813,7 @@ static void MX_TIM10_Init(void)
   htim10.Instance = TIM10;
   htim10.Init.Prescaler = 9000-1;
   htim10.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim10.Init.Period = 1000;
+  htim10.Init.Period = 10000;
   htim10.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim10.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim10) != HAL_OK)

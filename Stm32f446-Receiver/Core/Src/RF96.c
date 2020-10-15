@@ -225,7 +225,7 @@ void Rf96_Lora_init(void)
 	// Выбираем полосу частот, Coding rate, и мод заголовка
 	Rf96_bandwide_CR_HeadreMod(7,4,0);
 	// Выбираем Spreading factor, включение-выключение loadCRC,Таймаут по RX
-	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x0FF);
+	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x1FF);
 	// Устанавливаем длину преамбулы
 	Rf96_Preamble(8);
 	// Заходим в StandBy

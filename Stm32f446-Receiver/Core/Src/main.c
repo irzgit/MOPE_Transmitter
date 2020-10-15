@@ -409,7 +409,7 @@ int main(void)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					// Пересылаем принятый пакет на linux
 					for(uint8_t i=0;i<MaxBuffOfCKT-4;i++)
-					BuffTx[i+4]=TX_RX_Radio[i];
+					BuffTx[i+4]=TX_RX_Radio[i+1];
 					BuffTx[0]=0x7C;
 					BuffTx[1]=0x6E;
 					BuffTx[2]=0xA1;
@@ -418,6 +418,7 @@ int main(void)
 					// Посылка принята успешно, отправляем запрос на данные
 					if(Resolve4com==1) // Если нет запрета на 4 команду, то отправляем ее
 					{
+					 LedMode1=1; // Режим мигания - посылка передается
 					 CommandToRadio(4);
 					 // Ожидаем команду
 					 Rf96_Lora_RX_mode();
@@ -703,6 +704,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		  BuffRx[countRx]=data;
 		  if(countRx==MaxBuffOfCKT-1)
 		  {
+			  // Запрещаем 4 команду
+			  Resolve4com=0;
+			  // Устанавливаем флаг того, что посылка принята
 			  Readflag=1;
 		  }
 		  else
@@ -710,8 +714,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			  countRx++;
 		  }
 		  HAL_UART_Receive_IT(&huart2, &data, 1);
-		  // Запрещаем 4 команду
-		  Resolve4com=0;
+
 	  }
 }
 // Обработчик прерываний таймера

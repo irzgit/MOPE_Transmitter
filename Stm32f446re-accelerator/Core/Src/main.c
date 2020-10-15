@@ -556,7 +556,7 @@ int main(void)
 			}
 			if(RadioIrq==1)  // Если пришел запрос на отправку измерений по радио
 			{
-				for(uint8_t i=0;i<RadioMaxBuff-2;i++)
+				for(uint8_t i=0;i<RadioMaxBuff-3;i++)
 				{
 					TX_RX_Radio[i+1]=BuffCkt[i+4];
 				}

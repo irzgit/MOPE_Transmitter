@@ -140,6 +140,8 @@ const char MassFileName[10][10]=
 	{"Data7.txt\0"},
 	{"Data8.txt\0"},
 	{"Data9.txt\0"}};
+// Передача или прием по радио в данный момент
+uint8_t ModeRadio=0;
 
 // Функция чтения слова (8 бита) из памяти по адресу
 uint32_t Flash_Read_single8bit(uint32_t Adr)
@@ -303,9 +305,10 @@ void RXCommande1(void)
 		}
 	    ResolveSDWrite=1; // Открываем доступ к записи на SD
     // Отсылаем ответ
+	    ModeRadio=1;
     CommandToRadio(1);
     // Ожидаем команду
-    Rf96_Lora_RX_mode();
+   // Rf96_Lora_RX_mode();
 }
 // Команда включения клапаном
 void RXCommande2(void)
@@ -313,9 +316,10 @@ void RXCommande2(void)
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
 	// Отсылаем ответ
+	ModeRadio=1;
     CommandToRadio(2);
     // Ожидаем команду
-    Rf96_Lora_RX_mode();
+   // Rf96_Lora_RX_mode();
 }
 
 // Команда включения двигателя
@@ -328,9 +332,10 @@ void RXCommande3(void)
 	// Убираем единицу с двигателя
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
 	// Отсылаем ответ
+	ModeRadio=1;
     CommandToRadio(3);
     // Ожидаем команду
-    Rf96_Lora_RX_mode();
+    //Rf96_Lora_RX_mode();
 }
 // Команда - запрос на отправку данных
 void RXCommande4(void)
@@ -362,9 +367,10 @@ void RXCommande5(void)
 	}
     ResolveSDWrite=0; // Закрываем доступ к записи на SD
     // Отсылаем ответ
+    ModeRadio=1;
     CommandToRadio(5);
     // Ожидаем команду
-    Rf96_Lora_RX_mode();
+   // Rf96_Lora_RX_mode();
 }
 // Команда закрытия клапана
 void RXCommande6(void)
@@ -372,9 +378,10 @@ void RXCommande6(void)
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
 	// Отсылаем ответ
+	ModeRadio=1;
     CommandToRadio(6);
     // Ожидаем команду
-    Rf96_Lora_RX_mode();
+   // Rf96_Lora_RX_mode();
 }
 
 // Проверка SD карты на работоспособность
@@ -424,10 +431,10 @@ void DataConv(void)
 	uint32_TO_charmass(reciveTime, SDbufWrite, 0, 8);
 	for(uint8_t i=0;i<38;i++)
 	{
-		uint32_TO_charmass(&BuffMidW[i+4], SDbufWrite, 9+i*4, 3);
+		uint32_TO_charmass(BuffMidW[i+4], SDbufWrite, 9+i*4, 3);
 		SDbufWrite[8+i*4]=',';
 	}
-	SDbufWrite[162]='\n';
+	SDbufWrite[160]='\n';
 
 }
 /* USER CODE END 0 */
@@ -507,6 +514,8 @@ int main(void)
 	    // Прерывание по приему по радиоканалу
 		if(Get_NIRQ_Di0())
 		{
+			if(ModeRadio==0) // если прерывание по приему
+			{
             // Достаем посылку из буфера
 			Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
 			// Считаем CRC
@@ -538,13 +547,24 @@ int main(void)
 					break;
 				}
 			}
+			} else if(ModeRadio==1) // если прерывание по передаче
+			{
+				ModeRadio=0;
+				// Сбрасываем флаги
+				Rf96_LoRaClearIrq();
+	            // Заходим в Standby
+				Rf96_Standby();
+			    // Ожидаем команду
+			    Rf96_Lora_RX_mode();
+
+			}
 		}
 
 		if(ResolveSDWrite==1 && ReadyToWrite==1) //  Если разрешена запись на Sd карту и если есть что записывать
 		{
 			// Запись на SD
 			DataConv();
-			fres = f_write(&fil, SDbufWrite, 163, &bytesWrote);
+			fres = f_write(&fil, SDbufWrite, 161, &bytesWrote);
 			if (fres != FR_OK)
 			{
 				while(1)
@@ -576,9 +596,10 @@ int main(void)
 				Rf96_LoRaClearIrq();
 			    // Отправка посылки
 				Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
-			    // Ожидаем команду
-			    Rf96_Lora_RX_mode();
+                // Запрещаем передачу по радио
 				RadioIrq=0;
+				// следующее Прерывание будет по передаче
+				ModeRadio=1;
 			}
 			// Синхронизация файла и sd карты
 			fres = f_sync(&fil);

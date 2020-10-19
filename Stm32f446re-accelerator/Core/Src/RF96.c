@@ -310,7 +310,7 @@ void Rf96_LoRaTxPacket(char* Str, uint8_t LenStr)
 
 
 	// Ждем пока появится прерывание
-
+/*
 	while(1)
 	{
 		if(Get_NIRQ_Di0())
@@ -323,6 +323,7 @@ void Rf96_LoRaTxPacket(char* Str, uint8_t LenStr)
 			break;
 		}
 	}
+	*/
 
 
 }

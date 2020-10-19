@@ -106,7 +106,6 @@ FATFS FatFs;
 FIL fil;
 FRESULT fres;
 UINT bytesWrote;
-char scanBuff[300]={"/"};
 // время отсчета микрконтроллера в милисекундах
 uint32_t reciveTime=0;
 // CRC16
@@ -119,6 +118,8 @@ uint8_t ResolveSDWrite=0;
 uint8_t ReadyToWrite=0;
 // Массив данных, пришедших с ЦКТ
 uint8_t BuffCkt[MaxBuffOfCKT];
+// Массив на запись на SD карту ( буфер посредник)
+uint8_t BuffMidW[MaxBuffOfCKT];
 // Для синхронизации с ЦКТ
 uint8_t readFlag;
 // Переменная запроса на отправку данных по радио
@@ -139,7 +140,6 @@ const char MassFileName[10][10]=
 	{"Data7.txt\0"},
 	{"Data8.txt\0"},
 	{"Data9.txt\0"}};
-const char mass[10]={"Data0.txt\0"};
 
 // Функция чтения слова (8 бита) из памяти по адресу
 uint32_t Flash_Read_single8bit(uint32_t Adr)
@@ -424,7 +424,7 @@ void DataConv(void)
 	uint32_TO_charmass(reciveTime, SDbufWrite, 0, 8);
 	for(uint8_t i=0;i<38;i++)
 	{
-		uint32_TO_charmass(&BuffCkt[i+4], SDbufWrite, 9+i*4, 3);
+		uint32_TO_charmass(&BuffMidW[i+4], SDbufWrite, 9+i*4, 3);
 		SDbufWrite[8+i*4]=',';
 	}
 	SDbufWrite[162]='\n';
@@ -558,7 +558,7 @@ int main(void)
 			{
 				for(uint8_t i=0;i<RadioMaxBuff-3;i++)
 				{
-					TX_RX_Radio[i+1]=BuffCkt[i+4];
+					TX_RX_Radio[i+1]=BuffMidW[i+4];
 				}
 				// заносим в 1 элемент 4 команду
 				TX_RX_Radio[0]=4;
@@ -1093,6 +1093,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			ReadyToWrite=1;
 			//  Время в мс, когда пришли данные
 			reciveTime = HAL_GetTick();
+			// Перезаписываем данные в массив посредник
+			for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+			{
+				BuffMidW[i]=BuffCkt[i];
+			}
 		} else  // Если данные не синхронизированы
 		{
 			readFlag=1;

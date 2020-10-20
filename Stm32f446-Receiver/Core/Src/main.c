@@ -46,8 +46,8 @@
  *
  *  1) Поочередное включение - Индикация того, что УСИ ПРД включился
  *  2) 1 светодиод  мигает - идет передача( ожидание) посылки, горит - посылка пришла, перестал гореть - посылка не пришла
- *  3) 2 светодиод горит - всегда
- *  4) 3 светодиод горит - всегда
+ *  3) 2 светодиод дублирует первый за исключением ожидания посылки (мигания)
+ *  4) 3 светодиод не горит, если в данный момент образовалась очередь из команд от Linux
  */
 /* USER CODE END PM */
 
@@ -99,6 +99,12 @@ uint8_t BuffRx[MaxBuffOfCKT];
  uint32_t reciveTime=0;
  // Запрет/разрешение на отправку команд
  uint8_t AccessRadio=0;
+ // Переменная по таймауту
+ uint8_t RadioTimeoutRx=0;
+ // Задержка в мс
+ uint32_t Ms_Delay=0;
+ // Начало задержки
+ uint8_t Delay_start=0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -255,7 +261,6 @@ int main(void)
   MX_DMA_Init();
   MX_SPI1_Init();
   MX_TIM6_Init();
-  HAL_Delay(100);
   MX_USART2_UART_Init();
   /* USER CODE BEGIN 2 */
   // Индикация включения УСИ ПРД
@@ -265,6 +270,7 @@ int main(void)
   HAL_Delay(300);
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
   HAL_Delay(300);
+
   // Инициализация lora sx1272
   Rf96_Lora_init();
   // Вход в режим приема
@@ -294,6 +300,7 @@ int main(void)
 	  if(Readflag==1 && AccessRadio==0)
 	  {
 		  Readflag=0;
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 
 		  CRC_8c=BuffRx[MaxBuffOfCKT-1];
           if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
@@ -306,6 +313,9 @@ int main(void)
         		  CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
   			      // Занимаем радиоканал
   			      AccessRadio=1;
         		  break;
@@ -315,6 +325,9 @@ int main(void)
         		  CommandToRadio(2); // Команда открытия клапана
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
   			      // Занимаем радиоканал
   			      AccessRadio=1;
         		  break;
@@ -324,6 +337,9 @@ int main(void)
         		  CommandToRadio(3); // Команда запуска двигателя
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
   			      // Занимаем радиоканал
   			      AccessRadio=1;
         		  break;
@@ -346,6 +362,9 @@ int main(void)
         		  CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
   			      // Занимаем радиоканал
   			      AccessRadio=1;
         		  break;
@@ -355,6 +374,9 @@ int main(void)
         		  CommandToRadio(6); // Команда закрытия клапана
   			      // Ожидаем команду
   			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
   			      // Занимаем радиоканал
   			      AccessRadio=1;
         		  break;
@@ -380,33 +402,49 @@ int main(void)
 
 			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
 			{
+	              // Останавливаем таймер
+			      Delay_start=0;
+			      Ms_Delay=0;
 				switch(TX_RX_Radio[CommIndex])
 				{
 				case 1:   // Команда начала записи: Создаем файл
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-					// Посылка принята успешно, отправляем запрос на данные
-					Resolve4com=1; // Разрешение на 4 команду
-					LedMode1=1; // Режим мигания - посылка передается
-					CommandToRadio(4);
-					 // Ожидаем команду
-					Rf96_Lora_RX_mode();
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// Посылка принята успешно, отправляем запрос на данные, если нет команд с Linux
+					if(Readflag!=1)
+					{
+						Resolve4com=1; // Разрешение на 4 команду
+						LedMode1=1; // Режим мигания - посылка передается
+						CommandToRadio(4);
+						// Ожидаем команду
+						Rf96_Lora_RX_mode();
+						// Запуск таймера для отслеживания таймаута
+						Delay_start=1;
+						Ms_Delay=0;
+						AccessRadio=1;
+					} else AccessRadio=0;
+					 //AccessRadio=0;
+
 					break;
 				case 2:   // Команда открытия клапана
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-	  			      // радиоканал не занят
-	  			      AccessRadio=0;
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+	  			    // радиоканал не занят
+	  			    AccessRadio=0;
 					break;
 				case 3:   // Команда запуска двигателя
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-	  			      // радиоканал не занят
-	  			      AccessRadio=0;
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+	  			    // радиоканал не занят
+	  			    AccessRadio=0;
 					break;
 				case 4:   // Команда запроса данных
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 					// Пересылаем принятый пакет на linux
 					for(uint8_t i=0;i<MaxBuffOfCKT-4;i++)
 					BuffTx[i+4]=TX_RX_Radio[i+1];
@@ -416,28 +454,64 @@ int main(void)
 					BuffTx[3]=0x2C;
 					HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
 					// Посылка принята успешно, отправляем запрос на данные
-					if(Resolve4com==1) // Если нет запрета на 4 команду, то отправляем ее
+					if(Resolve4com==1 && Readflag!=1  ) // Если нет запрета на 4 команду, то отправляем ее
 					{
 					 LedMode1=1; // Режим мигания - посылка передается
 					 CommandToRadio(4);
 					 // Ожидаем команду
 					 Rf96_Lora_RX_mode();
-					}
+	  			      // Запуск таймера для отслеживания таймаута
+	  			      Delay_start=1;
+	  			      Ms_Delay=0;
+	  			      AccessRadio=1;
+					} else AccessRadio=0;
 	  			     // радиоканал не занят
-	  			     AccessRadio=0;
 
 					break;
 				case 5:   // Команда закрытия файла на SD и запрет записи на SD
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+	  			    // радиоканал не занят
+	  			    AccessRadio=0;
 					break;
 				case 6:  // Команда закрытия клапана
 					LedMode1=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+	  			    // радиоканал не занят
+	  			    AccessRadio=0;
 					break;
 				}
 			}
 	  }
+
+	  // Если радиосигнал не был принят
+	  if(RadioTimeoutRx==1)
+	 	  {
+			  // Останавливаем таймер
+			  Delay_start=0;
+			  Ms_Delay=0;
+			  RadioTimeoutRx=0;
+			  LedMode1=0; // посылка пропущена (тушим светодиод)
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+  	 		  Rf96_LoRaClearIrq();
+  	 		  // Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
+  	 		  if(Resolve4com==1 && Readflag!= 1)
+  	 		  {
+  	 			  LedMode1=1; // Режим мигания - посылка передается
+        		  CommandToRadio(4); // Команда запроса данных
+  			      // Ожидаем команду
+  			      Rf96_Lora_RX_mode();
+  			      // Запуск таймера для отслеживания таймаута
+  			      Delay_start=1;
+  			      Ms_Delay=0;
+  			    AccessRadio=1 ;
+  	 		  } else   AccessRadio=0;
+
+  	 	  }
+ /*
 	  // Если Радиосигнал не был принят
 	  if(Get_NIRQ_Di1()) // Прерывание по таймауту
 	  	 	  {
@@ -456,7 +530,7 @@ int main(void)
   			      AccessRadio=0;
 
 	  	 	  }
-
+*/
 
     /* USER CODE END WHILE */
 
@@ -485,9 +559,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -704,6 +778,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		  BuffRx[countRx]=data;
 		  if(countRx==MaxBuffOfCKT-1)
 		  {
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 			  // Запрещаем 4 команду
 			  Resolve4com=0;
 			  // Устанавливаем флаг того, что посылка принята
@@ -727,6 +802,28 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
 		}
 	}
+}
+
+// Прерывание по системному таймеру
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+	if(Delay_start==1)
+	{
+		if(Ms_Delay<7000)
+		{
+			Ms_Delay++;
+		}
+		else
+		{
+			RadioTimeoutRx=1; // произошло прерывание
+		}
+	}
+  /* USER CODE END SysTick_IRQn 0 */
+  HAL_IncTick();
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  /* USER CODE END SysTick_IRQn 1 */
 }
 /* USER CODE END 4 */
 

@@ -106,6 +106,7 @@ FATFS FatFs;
 FIL fil;
 FRESULT fres;
 UINT bytesWrote;
+UINT bytesRead;
 // время отсчета микрконтроллера в милисекундах
 uint32_t reciveTime=0;
 // CRC16
@@ -142,6 +143,8 @@ const char MassFileName[10][10]=
 	{"Data9.txt\0"}};
 // Передача или прием по радио в данный момент
 uint8_t ModeRadio=0;
+// Массив чтения с SD
+uint8_t BuffSDRead[50];
 
 // Функция чтения слова (8 бита) из памяти по адресу
 uint32_t Flash_Read_single8bit(uint32_t Adr)
@@ -258,7 +261,92 @@ void uint32_TO_charmass(uint32_t Number, uint8_t *mass, uint16_t startMass, uint
 		Number = Number / 10;
 	}
 }
+uint8_t ReadNumofFileSD(void)
+{
+        uint8_t Num=0;
+	    ///  Создание/открытие файла
+		fres = f_mount(&FatFs, "", 1); //1=mount now
 
+		if (fres != FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			while(1);
+		}
+		// Открываем или создаем новый файл
+		fres = f_open(&fil, "InformationSD.txt", FA_OPEN_ALWAYS | FA_READ);
+
+		if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+		} else
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			while(1);
+		}
+		//Читаем количество данных
+		fres=f_read(&fil,BuffSDRead,1,&bytesRead);
+		Num=BuffSDRead[0];
+
+	    fres=f_close(&fil);
+		if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+		} else
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			while(1);
+		}
+	    fres=f_mount(NULL, "", 0);
+		if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+		} else
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			while(1);
+		}
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+
+	return Num;
+}
+void WriteNumofFileSD(uint8_t Num)
+{
+	        UINT bytesWroteInform;
+	        ///  Создание/открытие файла
+			fres = f_mount(&FatFs, "", 1); //1=mount now
+
+			if (fres != FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
+			}
+			// Открываем или создаем новый файл
+			fres = f_open(&fil, "InformationSD.txt", FA_OPEN_ALWAYS | FA_WRITE);
+
+			if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+			} else
+			{
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
+			}
+			//Читаем количество данных
+			fres = f_write(&fil, &Num, 1, &bytesWroteInform);
+		    fres=f_close(&fil);
+			if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+			} else
+			{
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
+			}
+		    fres=f_mount(NULL, "", 0);
+			if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+
+			} else
+			{
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
+			}
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+
+
+}
 
 // Функция синхронизации Usartа с ЦКТ
 void SyncCKT(void)
@@ -277,19 +365,28 @@ void RXCommande1(void)
 {
     // Запись в память номера файла, на котором мы находимся
 
+	CountFileNow=ReadNumofFileSD();
+	if(CountFileNow>9)
+	{
+		CountFileNow=0;
+	} else 	CountFileNow++;
+	WriteNumofFileSD(CountFileNow);
 	//CountFileNow=Flash_Read_single8bit(FilesAdr);
+	/*
 	if(CountFileNow==0xFF || CountFileNow>=9 ) // Максимальное количество создаваемых файлов =9
 	{
 		CountFileNow=0;
 	}
 	CountFileNow++;
+	*/
 	//flashErasePage(FLASH_SECTOR_6);
 	//Flash_Write_single8bit(FilesAdr,CountFileNow);
 	///ФЛЕШКА
 	///  Создание файла
 		fres = f_mount(&FatFs, "", 1); //1=mount now
 
-		if (fres != FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
+		if (fres != FR_OK)
+		{ // Если проблема с флешкой  выключаем 1 светодиод
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
 		}
@@ -308,7 +405,7 @@ void RXCommande1(void)
 	    ModeRadio=1;
     CommandToRadio(1);
     // Ожидаем команду
-   // Rf96_Lora_RX_mode();
+    Rf96_Lora_RX_mode();
 }
 // Команда включения клапаном
 void RXCommande2(void)
@@ -319,7 +416,7 @@ void RXCommande2(void)
 	ModeRadio=1;
     CommandToRadio(2);
     // Ожидаем команду
-   // Rf96_Lora_RX_mode();
+    Rf96_Lora_RX_mode();
 }
 
 // Команда включения двигателя
@@ -335,7 +432,7 @@ void RXCommande3(void)
 	ModeRadio=1;
     CommandToRadio(3);
     // Ожидаем команду
-    //Rf96_Lora_RX_mode();
+    Rf96_Lora_RX_mode();
 }
 // Команда - запрос на отправку данных
 void RXCommande4(void)
@@ -370,7 +467,7 @@ void RXCommande5(void)
     ModeRadio=1;
     CommandToRadio(5);
     // Ожидаем команду
-   // Rf96_Lora_RX_mode();
+    Rf96_Lora_RX_mode();
 }
 // Команда закрытия клапана
 void RXCommande6(void)
@@ -381,7 +478,7 @@ void RXCommande6(void)
 	ModeRadio=1;
     CommandToRadio(6);
     // Ожидаем команду
-   // Rf96_Lora_RX_mode();
+    Rf96_Lora_RX_mode();
 }
 
 // Проверка SD карты на работоспособность
@@ -423,6 +520,8 @@ void CheckSD(void)
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 
 }
+
+
 
 // Парсер
 void DataConv(void)

@@ -150,8 +150,8 @@ void Rf96_irqMaskTX(void)
 //Снятие маски с прерывания по RX
 void Rf96_irqMaskRX(void)
 {
-	//SPIWrite(LR_RegIrqFlagsMask,0x3F); // Без CRC
-	SPIWrite(LR_RegIrqFlagsMask,0x1F); //с CRC
+	SPIWrite(LR_RegIrqFlagsMask,0x3F); // Без CRC
+	//SPIWrite(LR_RegIrqFlagsMask,0x1F); //с CRC
 }
 //Установка числа передаваемых данных (в байтах)
 void Rf96_PayloadLength(uint8_t LengthBytes_value)
@@ -225,7 +225,7 @@ void Rf96_Lora_init(void)
 	// Выбираем полосу частот, Coding rate, и мод заголовка
 	Rf96_bandwide_CR_HeadreMod(7,4,0);
 	// Выбираем Spreading factor, включение-выключение loadCRC,Таймаут по RX
-	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x1FF);
+	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x0FF);
 	// Устанавливаем длину преамбулы
 	Rf96_Preamble(8);
 	// Заходим в StandBy
@@ -293,8 +293,8 @@ void Rf96_Lora_RX_mode(void)
 	  // Устанавливает указатель на адрес начала массива RX в FIFO
 	  Rf96_FIFO_point(0x00);
 	  // Входим в RX single мод
-	  Rf96_RX_Single_mode();
-	  //Rf96_RX_Continuous_mode();
+	  //Rf96_RX_Single_mode();
+	  Rf96_RX_Continuous_mode();
 
 }
 

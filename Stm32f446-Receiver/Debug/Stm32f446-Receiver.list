@@ -27,23 +27,23 @@ Idx Name          Size      VMA       LMA       File off  Algn
                   ALLOC
  11 .ARM.attributes 00000030  00000000  00000000  0002000c  2**0
                   CONTENTS, READONLY
- 12 .debug_info   000110ad  00000000  00000000  0002003c  2**0
+ 12 .debug_info   0001108b  00000000  00000000  0002003c  2**0
                   CONTENTS, READONLY, DEBUGGING
- 13 .debug_abbrev 00002265  00000000  00000000  000310e9  2**0
+ 13 .debug_abbrev 00002265  00000000  00000000  000310c7  2**0
                   CONTENTS, READONLY, DEBUGGING
- 14 .debug_aranges 00000f78  00000000  00000000  00033350  2**3
+ 14 .debug_aranges 00000f78  00000000  00000000  00033330  2**3
                   CONTENTS, READONLY, DEBUGGING
- 15 .debug_ranges 00000e70  00000000  00000000  000342c8  2**3
+ 15 .debug_ranges 00000e70  00000000  00000000  000342a8  2**3
                   CONTENTS, READONLY, DEBUGGING
- 16 .debug_macro  000227d3  00000000  00000000  00035138  2**0
+ 16 .debug_macro  000227d3  00000000  00000000  00035118  2**0
                   CONTENTS, READONLY, DEBUGGING
- 17 .debug_line   0000b54c  00000000  00000000  0005790b  2**0
+ 17 .debug_line   0000b54a  00000000  00000000  000578eb  2**0
                   CONTENTS, READONLY, DEBUGGING
- 18 .debug_str    000d18a8  00000000  00000000  00062e57  2**0
+ 18 .debug_str    000d1895  00000000  00000000  00062e35  2**0
                   CONTENTS, READONLY, DEBUGGING
- 19 .comment      0000007b  00000000  00000000  001346ff  2**0
+ 19 .comment      0000007b  00000000  00000000  001346ca  2**0
                   CONTENTS, READONLY
- 20 .debug_frame  000040c8  00000000  00000000  0013477c  2**2
+ 20 .debug_frame  000040c8  00000000  00000000  00134748  2**2
                   CONTENTS, READONLY, DEBUGGING
 
 Disassembly of section .text:
@@ -1311,8 +1311,6 @@ int main(void)
   // Инициализация lora sx1272
   Rf96_Lora_init();
  8000a20:	f7ff fecb 	bl	80007ba <Rf96_Lora_init>
-  // Вход в режим приема
-  //Rf96_Lora_RX_mode();
   // Запуск приема команд с Linux
   HAL_UART_Receive_IT(&huart2, &data, 1);
  8000a24:	2201      	movs	r2, #1
@@ -1327,8 +1325,8 @@ int main(void)
   while (1)
   {
 
-      // Фильтрация помех 1 разъема
-	  if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
+		// Фильтрация помех 1 разъема
+		if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
  8000a34:	f000 ff96 	bl	8001964 <HAL_GetTick>
  8000a38:	4602      	mov	r2, r0
  8000a3a:	4bab      	ldr	r3, [pc, #684]	; (8000ce8 <main+0x320>)
@@ -1340,8 +1338,8 @@ int main(void)
  8000a46:	781b      	ldrb	r3, [r3, #0]
  8000a48:	2b00      	cmp	r3, #0
  8000a4a:	d00d      	beq.n	8000a68 <main+0xa0>
-	  {
-		    ReadRdy=0;
+		{
+			ReadRdy=0;
  8000a4c:	4ba7      	ldr	r3, [pc, #668]	; (8000cec <main+0x324>)
  8000a4e:	2200      	movs	r2, #0
  8000a50:	701a      	strb	r2, [r3, #0]
@@ -1357,11 +1355,11 @@ int main(void)
  8000a62:	4ba3      	ldr	r3, [pc, #652]	; (8000cf0 <main+0x328>)
  8000a64:	2200      	movs	r2, #0
  8000a66:	701a      	strb	r2, [r3, #0]
-	  }
+		}
 
 
-	  // Пришла какая-то посылка по linux
-	  if(Readflag==1 && AccessRadio==0)
+		// Пришла какая-то посылка по linux
+		if(Readflag==1 && AccessRadio==0)
  8000a68:	4ba2      	ldr	r3, [pc, #648]	; (8000cf4 <main+0x32c>)
  8000a6a:	781b      	ldrb	r3, [r3, #0]
  8000a6c:	2b01      	cmp	r3, #1
@@ -1370,23 +1368,23 @@ int main(void)
  8000a74:	781b      	ldrb	r3, [r3, #0]
  8000a76:	2b00      	cmp	r3, #0
  8000a78:	f040 80a0 	bne.w	8000bbc <main+0x1f4>
-	  {
-		  Readflag=0;
+		{
+			Readflag=0;
  8000a7c:	4b9d      	ldr	r3, [pc, #628]	; (8000cf4 <main+0x32c>)
  8000a7e:	2200      	movs	r2, #0
  8000a80:	701a      	strb	r2, [r3, #0]
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
  8000a82:	2200      	movs	r2, #0
  8000a84:	2108      	movs	r1, #8
  8000a86:	4894      	ldr	r0, [pc, #592]	; (8000cd8 <main+0x310>)
  8000a88:	f001 fddc 	bl	8002644 <HAL_GPIO_WritePin>
 
-		  CRC_8c=BuffRx[MaxBuffOfCKT-1];
+			CRC_8c=BuffRx[MaxBuffOfCKT-1];
  8000a8c:	4b9b      	ldr	r3, [pc, #620]	; (8000cfc <main+0x334>)
  8000a8e:	f893 202a 	ldrb.w	r2, [r3, #42]	; 0x2a
  8000a92:	4b9b      	ldr	r3, [pc, #620]	; (8000d00 <main+0x338>)
  8000a94:	701a      	strb	r2, [r3, #0]
-          if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
+			if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
  8000a96:	212a      	movs	r1, #42	; 0x2a
  8000a98:	4898      	ldr	r0, [pc, #608]	; (8000cfc <main+0x334>)
  8000a9a:	f7ff ff31 	bl	8000900 <Crc8>
@@ -1396,8 +1394,8 @@ int main(void)
  8000aa4:	781b      	ldrb	r3, [r3, #0]
  8000aa6:	429a      	cmp	r2, r3
  8000aa8:	d17d      	bne.n	8000ba6 <main+0x1de>
-          {
-        	  switch(BuffRx[CommIndex])
+			{
+				switch(BuffRx[CommIndex])
  8000aaa:	4b94      	ldr	r3, [pc, #592]	; (8000cfc <main+0x334>)
  8000aac:	781b      	ldrb	r3, [r3, #0]
  8000aae:	3b01      	subs	r3, #1
@@ -1412,170 +1410,168 @@ int main(void)
  8000ac8:	08000ba7 	.word	0x08000ba7
  8000acc:	08000b53 	.word	0x08000b53
  8000ad0:	08000b7d 	.word	0x08000b7d
-        	  {
-        	  case 1:
-        		  LedMode1=1; // Режим мигания - посылка передается
+				{
+					case 1:
+					LedMode=1; // Режим мигания - посылка передается
  8000ad4:	4b8b      	ldr	r3, [pc, #556]	; (8000d04 <main+0x33c>)
  8000ad6:	2201      	movs	r2, #1
  8000ad8:	701a      	strb	r2, [r3, #0]
-        		  Resolve4com=0;
+					Resolve4com=0;
  8000ada:	4b8b      	ldr	r3, [pc, #556]	; (8000d08 <main+0x340>)
  8000adc:	2200      	movs	r2, #0
  8000ade:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
+					CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
  8000ae0:	2001      	movs	r0, #1
  8000ae2:	f7ff ff2f 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000ae6:	f7ff fea2 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000aea:	4b88      	ldr	r3, [pc, #544]	; (8000d0c <main+0x344>)
  8000aec:	2201      	movs	r2, #1
  8000aee:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000af0:	4b87      	ldr	r3, [pc, #540]	; (8000d10 <main+0x348>)
  8000af2:	2200      	movs	r2, #0
  8000af4:	601a      	str	r2, [r3, #0]
-  			      // Занимаем радиоканал
-  			      AccessRadio=1;
+					// Занимаем радиоканал
+					AccessRadio=1;
  8000af6:	4b80      	ldr	r3, [pc, #512]	; (8000cf8 <main+0x330>)
  8000af8:	2201      	movs	r2, #1
  8000afa:	701a      	strb	r2, [r3, #0]
-        		  break;
+					break;
  8000afc:	e053      	b.n	8000ba6 <main+0x1de>
-        	  case 2:
-        		  LedMode1=1; // Режим мигания - посылка передается
+					case 2:
+					LedMode=1; // Режим мигания - посылка передается
  8000afe:	4b81      	ldr	r3, [pc, #516]	; (8000d04 <main+0x33c>)
  8000b00:	2201      	movs	r2, #1
  8000b02:	701a      	strb	r2, [r3, #0]
-        		  Resolve4com=0;
+					Resolve4com=0;
  8000b04:	4b80      	ldr	r3, [pc, #512]	; (8000d08 <main+0x340>)
  8000b06:	2200      	movs	r2, #0
  8000b08:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(2); // Команда открытия клапана
+					CommandToRadio(2); // Команда открытия клапана
  8000b0a:	2002      	movs	r0, #2
  8000b0c:	f7ff ff1a 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000b10:	f7ff fe8d 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000b14:	4b7d      	ldr	r3, [pc, #500]	; (8000d0c <main+0x344>)
  8000b16:	2201      	movs	r2, #1
  8000b18:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000b1a:	4b7d      	ldr	r3, [pc, #500]	; (8000d10 <main+0x348>)
  8000b1c:	2200      	movs	r2, #0
  8000b1e:	601a      	str	r2, [r3, #0]
-  			      // Занимаем радиоканал
-  			      AccessRadio=1;
+					// Занимаем радиоканал
+					AccessRadio=1;
  8000b20:	4b75      	ldr	r3, [pc, #468]	; (8000cf8 <main+0x330>)
  8000b22:	2201      	movs	r2, #1
  8000b24:	701a      	strb	r2, [r3, #0]
-        		  break;
+					break;
  8000b26:	e03e      	b.n	8000ba6 <main+0x1de>
-        	  case 3:
-        		  LedMode1=1; // Режим мигания - посылка передается
+					case 3:
+					LedMode=1; // Режим мигания - посылка передается
  8000b28:	4b76      	ldr	r3, [pc, #472]	; (8000d04 <main+0x33c>)
  8000b2a:	2201      	movs	r2, #1
  8000b2c:	701a      	strb	r2, [r3, #0]
-        		  Resolve4com=0;
+					Resolve4com=0;
  8000b2e:	4b76      	ldr	r3, [pc, #472]	; (8000d08 <main+0x340>)
  8000b30:	2200      	movs	r2, #0
  8000b32:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(3); // Команда запуска двигателя
+					CommandToRadio(3); // Команда запуска двигателя
  8000b34:	2003      	movs	r0, #3
  8000b36:	f7ff ff05 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000b3a:	f7ff fe78 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000b3e:	4b73      	ldr	r3, [pc, #460]	; (8000d0c <main+0x344>)
  8000b40:	2201      	movs	r2, #1
  8000b42:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000b44:	4b72      	ldr	r3, [pc, #456]	; (8000d10 <main+0x348>)
  8000b46:	2200      	movs	r2, #0
  8000b48:	601a      	str	r2, [r3, #0]
-  			      // Занимаем радиоканал
-  			      AccessRadio=1;
+					// Занимаем радиоканал
+					AccessRadio=1;
  8000b4a:	4b6b      	ldr	r3, [pc, #428]	; (8000cf8 <main+0x330>)
  8000b4c:	2201      	movs	r2, #1
  8000b4e:	701a      	strb	r2, [r3, #0]
-        		  break;
+					break;
  8000b50:	e029      	b.n	8000ba6 <main+0x1de>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
-  			      */
-        		  break;
-        	  case 5:
-        		  LedMode1=1; // Режим мигания - посылка передается
+					case 4:  // Внутренняя команда (запрос данных с ЦКТ)
+					break;
+					case 5:
+					LedMode=1; // Режим мигания - посылка передается
  8000b52:	4b6c      	ldr	r3, [pc, #432]	; (8000d04 <main+0x33c>)
  8000b54:	2201      	movs	r2, #1
  8000b56:	701a      	strb	r2, [r3, #0]
-        		  Resolve4com=0;
+					Resolve4com=0;
  8000b58:	4b6b      	ldr	r3, [pc, #428]	; (8000d08 <main+0x340>)
  8000b5a:	2200      	movs	r2, #0
  8000b5c:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
+					CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
  8000b5e:	2005      	movs	r0, #5
  8000b60:	f7ff fef0 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000b64:	f7ff fe63 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000b68:	4b68      	ldr	r3, [pc, #416]	; (8000d0c <main+0x344>)
  8000b6a:	2201      	movs	r2, #1
  8000b6c:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000b6e:	4b68      	ldr	r3, [pc, #416]	; (8000d10 <main+0x348>)
  8000b70:	2200      	movs	r2, #0
  8000b72:	601a      	str	r2, [r3, #0]
-  			      // Занимаем радиоканал
-  			      AccessRadio=1;
+					// Занимаем радиоканал
+					AccessRadio=1;
  8000b74:	4b60      	ldr	r3, [pc, #384]	; (8000cf8 <main+0x330>)
  8000b76:	2201      	movs	r2, #1
  8000b78:	701a      	strb	r2, [r3, #0]
-        		  break;
+					break;
  8000b7a:	e014      	b.n	8000ba6 <main+0x1de>
-        	  case 6:
-        		  LedMode1=1; // Режим мигания - посылка передается
+					case 6:
+					LedMode=1; // Режим мигания - посылка передается
  8000b7c:	4b61      	ldr	r3, [pc, #388]	; (8000d04 <main+0x33c>)
  8000b7e:	2201      	movs	r2, #1
  8000b80:	701a      	strb	r2, [r3, #0]
-        		  Resolve4com=0;
+					Resolve4com=0;
  8000b82:	4b61      	ldr	r3, [pc, #388]	; (8000d08 <main+0x340>)
  8000b84:	2200      	movs	r2, #0
  8000b86:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(6); // Команда закрытия клапана
+					CommandToRadio(6); // Команда закрытия клапана
  8000b88:	2006      	movs	r0, #6
  8000b8a:	f7ff fedb 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000b8e:	f7ff fe4e 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000b92:	4b5e      	ldr	r3, [pc, #376]	; (8000d0c <main+0x344>)
  8000b94:	2201      	movs	r2, #1
  8000b96:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000b98:	4b5d      	ldr	r3, [pc, #372]	; (8000d10 <main+0x348>)
  8000b9a:	2200      	movs	r2, #0
  8000b9c:	601a      	str	r2, [r3, #0]
-  			      // Занимаем радиоканал
-  			      AccessRadio=1;
+					// Занимаем радиоканал
+					AccessRadio=1;
  8000b9e:	4b56      	ldr	r3, [pc, #344]	; (8000cf8 <main+0x330>)
  8000ba0:	2201      	movs	r2, #1
  8000ba2:	701a      	strb	r2, [r3, #0]
-        		  break;
+					break;
  8000ba4:	bf00      	nop
-
-        	  }
-          }
-		    countRx=0;
+				}
+			}
+			// Продолжаем ожидать посылку с Linux
+			countRx=0;
  8000ba6:	4b52      	ldr	r3, [pc, #328]	; (8000cf0 <main+0x328>)
  8000ba8:	2200      	movs	r2, #0
  8000baa:	701a      	strb	r2, [r3, #0]
@@ -1587,20 +1583,19 @@ int main(void)
  8000bb4:	4949      	ldr	r1, [pc, #292]	; (8000cdc <main+0x314>)
  8000bb6:	484a      	ldr	r0, [pc, #296]	; (8000ce0 <main+0x318>)
  8000bb8:	f003 fb76 	bl	80042a8 <HAL_UART_Receive_IT>
+		}
 
-	  }
-
-
-	  if(Get_NIRQ_Di0()) // Прерывание по приему по радиоканалу
+		// Прерывание по приему по радиоканалу
+		if(Get_NIRQ_Di0())
  8000bbc:	f44f 6180 	mov.w	r1, #1024	; 0x400
  8000bc0:	4854      	ldr	r0, [pc, #336]	; (8000d14 <main+0x34c>)
  8000bc2:	f001 fd27 	bl	8002614 <HAL_GPIO_ReadPin>
  8000bc6:	4603      	mov	r3, r0
  8000bc8:	2b00      	cmp	r3, #0
  8000bca:	f000 8119 	beq.w	8000e00 <main+0x438>
-	  {
+		{
 
-            // Достаем посылку из буфера
+			// Достаем посылку из буфера
 			Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
  8000bce:	4852      	ldr	r0, [pc, #328]	; (8000d18 <main+0x350>)
  8000bd0:	f7ff fdd6 	bl	8000780 <Rf96_DataRX_From_FiFO>
@@ -1633,12 +1628,12 @@ int main(void)
  8000c04:	429a      	cmp	r2, r3
  8000c06:	f040 80fb 	bne.w	8000e00 <main+0x438>
 			{
-	              // Останавливаем таймер
-			      Delay_start=0;
+				// Останавливаем таймер
+				Delay_start=0;
  8000c0a:	4b40      	ldr	r3, [pc, #256]	; (8000d0c <main+0x344>)
  8000c0c:	2200      	movs	r2, #0
  8000c0e:	701a      	strb	r2, [r3, #0]
-			      Ms_Delay=0;
+				Ms_Delay=0;
  8000c10:	4b3f      	ldr	r3, [pc, #252]	; (8000d10 <main+0x348>)
  8000c12:	2200      	movs	r2, #0
  8000c14:	601a      	str	r2, [r3, #0]
@@ -1657,8 +1652,8 @@ int main(void)
  8000c38:	08000dbd 	.word	0x08000dbd
  8000c3c:	08000ddf 	.word	0x08000ddf
 				{
-				case 1:   // Команда начала записи: Создаем файл
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 1:   // Команда начала записи: Создаем файл
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000c40:	4b30      	ldr	r3, [pc, #192]	; (8000d04 <main+0x33c>)
  8000c42:	2200      	movs	r2, #0
  8000c44:	701a      	strb	r2, [r3, #0]
@@ -1679,36 +1674,34 @@ int main(void)
  8000c5e:	2b01      	cmp	r3, #1
  8000c60:	d014      	beq.n	8000c8c <main+0x2c4>
 					{
-						Resolve4com=1; // Разрешение на 4 команду
+					Resolve4com=1; // Разрешение на 4 команду
  8000c62:	4b29      	ldr	r3, [pc, #164]	; (8000d08 <main+0x340>)
  8000c64:	2201      	movs	r2, #1
  8000c66:	701a      	strb	r2, [r3, #0]
-						LedMode1=1; // Режим мигания - посылка передается
+					LedMode=1; // Режим мигания - посылка передается
  8000c68:	4b26      	ldr	r3, [pc, #152]	; (8000d04 <main+0x33c>)
  8000c6a:	2201      	movs	r2, #1
  8000c6c:	701a      	strb	r2, [r3, #0]
-						CommandToRadio(4);
+					CommandToRadio(4);
  8000c6e:	2004      	movs	r0, #4
  8000c70:	f7ff fe68 	bl	8000944 <CommandToRadio>
-						// Ожидаем команду
-						Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000c74:	f7ff fddb 	bl	800082e <Rf96_Lora_RX_mode>
-						// Запуск таймера для отслеживания таймаута
-						Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000c78:	4b24      	ldr	r3, [pc, #144]	; (8000d0c <main+0x344>)
  8000c7a:	2201      	movs	r2, #1
  8000c7c:	701a      	strb	r2, [r3, #0]
-						Ms_Delay=0;
+					Ms_Delay=0;
  8000c7e:	4b24      	ldr	r3, [pc, #144]	; (8000d10 <main+0x348>)
  8000c80:	2200      	movs	r2, #0
  8000c82:	601a      	str	r2, [r3, #0]
-						AccessRadio=1;
+					AccessRadio=1;
  8000c84:	4b1c      	ldr	r3, [pc, #112]	; (8000cf8 <main+0x330>)
  8000c86:	2201      	movs	r2, #1
  8000c88:	701a      	strb	r2, [r3, #0]
 					} else AccessRadio=0;
-					 //AccessRadio=0;
-
 					break;
  8000c8a:	e0b9      	b.n	8000e00 <main+0x438>
 					} else AccessRadio=0;
@@ -1717,8 +1710,8 @@ int main(void)
  8000c90:	701a      	strb	r2, [r3, #0]
 					break;
  8000c92:	e0b5      	b.n	8000e00 <main+0x438>
-				case 2:   // Команда открытия клапана
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 2:   // Команда открытия клапана
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000c94:	4b1b      	ldr	r3, [pc, #108]	; (8000d04 <main+0x33c>)
  8000c96:	2200      	movs	r2, #0
  8000c98:	701a      	strb	r2, [r3, #0]
@@ -1732,15 +1725,15 @@ int main(void)
  8000ca6:	2104      	movs	r1, #4
  8000ca8:	480b      	ldr	r0, [pc, #44]	; (8000cd8 <main+0x310>)
  8000caa:	f001 fccb 	bl	8002644 <HAL_GPIO_WritePin>
-	  			    // радиоканал не занят
-	  			    AccessRadio=0;
+					// радиоканал не занят
+					AccessRadio=0;
  8000cae:	4b12      	ldr	r3, [pc, #72]	; (8000cf8 <main+0x330>)
  8000cb0:	2200      	movs	r2, #0
  8000cb2:	701a      	strb	r2, [r3, #0]
 					break;
  8000cb4:	e0a4      	b.n	8000e00 <main+0x438>
-				case 3:   // Команда запуска двигателя
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 3:   // Команда запуска двигателя
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000cb6:	4b13      	ldr	r3, [pc, #76]	; (8000d04 <main+0x33c>)
  8000cb8:	2200      	movs	r2, #0
  8000cba:	701a      	strb	r2, [r3, #0]
@@ -1754,8 +1747,8 @@ int main(void)
  8000cc8:	2104      	movs	r1, #4
  8000cca:	4803      	ldr	r0, [pc, #12]	; (8000cd8 <main+0x310>)
  8000ccc:	f001 fcba 	bl	8002644 <HAL_GPIO_WritePin>
-	  			    // радиоканал не занят
-	  			    AccessRadio=0;
+					// радиоканал не занят
+					AccessRadio=0;
  8000cd0:	4b09      	ldr	r3, [pc, #36]	; (8000cf8 <main+0x330>)
  8000cd2:	2200      	movs	r2, #0
  8000cd4:	701a      	strb	r2, [r3, #0]
@@ -1779,8 +1772,8 @@ int main(void)
  8000d14:	40020000 	.word	0x40020000
  8000d18:	200000a4 	.word	0x200000a4
  8000d1c:	2000002a 	.word	0x2000002a
-				case 4:   // Команда запроса данных
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 4:   // Команда запроса данных с ЦКТ
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000d20:	4b55      	ldr	r3, [pc, #340]	; (8000e78 <main+0x4b0>)
  8000d22:	2200      	movs	r2, #0
  8000d24:	701a      	strb	r2, [r3, #0]
@@ -1848,32 +1841,31 @@ int main(void)
  8000d8c:	2b01      	cmp	r3, #1
  8000d8e:	d011      	beq.n	8000db4 <main+0x3ec>
 					{
-					 LedMode1=1; // Режим мигания - посылка передается
+					LedMode=1; // Режим мигания - посылка передается
  8000d90:	4b39      	ldr	r3, [pc, #228]	; (8000e78 <main+0x4b0>)
  8000d92:	2201      	movs	r2, #1
  8000d94:	701a      	strb	r2, [r3, #0]
-					 CommandToRadio(4);
+					CommandToRadio(4);
  8000d96:	2004      	movs	r0, #4
  8000d98:	f7ff fdd4 	bl	8000944 <CommandToRadio>
-					 // Ожидаем команду
-					 Rf96_Lora_RX_mode();
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
  8000d9c:	f7ff fd47 	bl	800082e <Rf96_Lora_RX_mode>
-	  			      // Запуск таймера для отслеживания таймаута
-	  			      Delay_start=1;
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
  8000da0:	4b3c      	ldr	r3, [pc, #240]	; (8000e94 <main+0x4cc>)
  8000da2:	2201      	movs	r2, #1
  8000da4:	701a      	strb	r2, [r3, #0]
-	  			      Ms_Delay=0;
+					Ms_Delay=0;
  8000da6:	4b3c      	ldr	r3, [pc, #240]	; (8000e98 <main+0x4d0>)
  8000da8:	2200      	movs	r2, #0
  8000daa:	601a      	str	r2, [r3, #0]
-	  			      AccessRadio=1;
+					AccessRadio=1;
  8000dac:	4b3b      	ldr	r3, [pc, #236]	; (8000e9c <main+0x4d4>)
  8000dae:	2201      	movs	r2, #1
  8000db0:	701a      	strb	r2, [r3, #0]
 					} else AccessRadio=0;
-	  			     // радиоканал не занят
-
+					// радиоканал не занят
 					break;
  8000db2:	e025      	b.n	8000e00 <main+0x438>
 					} else AccessRadio=0;
@@ -1882,8 +1874,8 @@ int main(void)
  8000db8:	701a      	strb	r2, [r3, #0]
 					break;
  8000dba:	e021      	b.n	8000e00 <main+0x438>
-				case 5:   // Команда закрытия файла на SD и запрет записи на SD
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 5:   // Команда закрытия файла на SD и запрет записи на SD
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000dbc:	4b2e      	ldr	r3, [pc, #184]	; (8000e78 <main+0x4b0>)
  8000dbe:	2200      	movs	r2, #0
  8000dc0:	701a      	strb	r2, [r3, #0]
@@ -1897,15 +1889,15 @@ int main(void)
  8000dce:	2104      	movs	r1, #4
  8000dd0:	482a      	ldr	r0, [pc, #168]	; (8000e7c <main+0x4b4>)
  8000dd2:	f001 fc37 	bl	8002644 <HAL_GPIO_WritePin>
-	  			    // радиоканал не занят
-	  			    AccessRadio=0;
+					// радиоканал не занят
+					AccessRadio=0;
  8000dd6:	4b31      	ldr	r3, [pc, #196]	; (8000e9c <main+0x4d4>)
  8000dd8:	2200      	movs	r2, #0
  8000dda:	701a      	strb	r2, [r3, #0]
 					break;
  8000ddc:	e010      	b.n	8000e00 <main+0x438>
-				case 6:  // Команда закрытия клапана
-					LedMode1=0; // посылка принята (просто зажигаем светодиод)
+					case 6:  // Команда закрытия клапана
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
  8000dde:	4b26      	ldr	r3, [pc, #152]	; (8000e78 <main+0x4b0>)
  8000de0:	2200      	movs	r2, #0
  8000de2:	701a      	strb	r2, [r3, #0]
@@ -1919,8 +1911,8 @@ int main(void)
  8000df0:	2104      	movs	r1, #4
  8000df2:	4822      	ldr	r0, [pc, #136]	; (8000e7c <main+0x4b4>)
  8000df4:	f001 fc26 	bl	8002644 <HAL_GPIO_WritePin>
-	  			    // радиоканал не занят
-	  			    AccessRadio=0;
+					// радиоканал не занят
+					AccessRadio=0;
  8000df8:	4b28      	ldr	r3, [pc, #160]	; (8000e9c <main+0x4d4>)
  8000dfa:	2200      	movs	r2, #0
  8000dfc:	701a      	strb	r2, [r3, #0]
@@ -1928,46 +1920,46 @@ int main(void)
  8000dfe:	bf00      	nop
 				}
 			}
-	  }
+		}
 
-	  // Если радиосигнал не был принят
-	  if(RadioTimeoutRx==1)
+	// Если радиосигнал не был принят
+	if(RadioTimeoutRx==1)
  8000e00:	4b27      	ldr	r3, [pc, #156]	; (8000ea0 <main+0x4d8>)
  8000e02:	781b      	ldrb	r3, [r3, #0]
  8000e04:	2b01      	cmp	r3, #1
  8000e06:	f47f ae15 	bne.w	8000a34 <main+0x6c>
-	 	  {
-			  // Останавливаем таймер
-			  Delay_start=0;
+	{
+		// Останавливаем таймер
+		Delay_start=0;
  8000e0a:	4b22      	ldr	r3, [pc, #136]	; (8000e94 <main+0x4cc>)
  8000e0c:	2200      	movs	r2, #0
  8000e0e:	701a      	strb	r2, [r3, #0]
-			  Ms_Delay=0;
+		Ms_Delay=0;
  8000e10:	4b21      	ldr	r3, [pc, #132]	; (8000e98 <main+0x4d0>)
  8000e12:	2200      	movs	r2, #0
  8000e14:	601a      	str	r2, [r3, #0]
-			  RadioTimeoutRx=0;
+		RadioTimeoutRx=0;
  8000e16:	4b22      	ldr	r3, [pc, #136]	; (8000ea0 <main+0x4d8>)
  8000e18:	2200      	movs	r2, #0
  8000e1a:	701a      	strb	r2, [r3, #0]
-			  LedMode1=0; // посылка пропущена (тушим светодиод)
+		LedMode=0; // посылка пропущена (тушим светодиод)
  8000e1c:	4b16      	ldr	r3, [pc, #88]	; (8000e78 <main+0x4b0>)
  8000e1e:	2200      	movs	r2, #0
  8000e20:	701a      	strb	r2, [r3, #0]
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
  8000e22:	2201      	movs	r2, #1
  8000e24:	2102      	movs	r1, #2
  8000e26:	4815      	ldr	r0, [pc, #84]	; (8000e7c <main+0x4b4>)
  8000e28:	f001 fc0c 	bl	8002644 <HAL_GPIO_WritePin>
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
  8000e2c:	2201      	movs	r2, #1
  8000e2e:	2104      	movs	r1, #4
  8000e30:	4812      	ldr	r0, [pc, #72]	; (8000e7c <main+0x4b4>)
  8000e32:	f001 fc07 	bl	8002644 <HAL_GPIO_WritePin>
-  	 		  Rf96_LoRaClearIrq();
+		Rf96_LoRaClearIrq();
  8000e36:	f7ff fb65 	bl	8000504 <Rf96_LoRaClearIrq>
-  	 		  // Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
-  	 		  if(Resolve4com==1 && Readflag!= 1)
+		// Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
+		if(Resolve4com==1 && Readflag!= 1)
  8000e3a:	4b14      	ldr	r3, [pc, #80]	; (8000e8c <main+0x4c4>)
  8000e3c:	781b      	ldrb	r3, [r3, #0]
  8000e3e:	2b01      	cmp	r3, #1
@@ -1976,36 +1968,36 @@ int main(void)
  8000e44:	781b      	ldrb	r3, [r3, #0]
  8000e46:	2b01      	cmp	r3, #1
  8000e48:	d011      	beq.n	8000e6e <main+0x4a6>
-  	 		  {
-  	 			  LedMode1=1; // Режим мигания - посылка передается
+		{
+			LedMode=1; // Режим мигания - посылка передается
  8000e4a:	4b0b      	ldr	r3, [pc, #44]	; (8000e78 <main+0x4b0>)
  8000e4c:	2201      	movs	r2, #1
  8000e4e:	701a      	strb	r2, [r3, #0]
-        		  CommandToRadio(4); // Команда запроса данных
+			CommandToRadio(4); // Команда запроса данных
  8000e50:	2004      	movs	r0, #4
  8000e52:	f7ff fd77 	bl	8000944 <CommandToRadio>
-  			      // Ожидаем команду
-  			      Rf96_Lora_RX_mode();
+			// Ожидаем команду
+			Rf96_Lora_RX_mode();
  8000e56:	f7ff fcea 	bl	800082e <Rf96_Lora_RX_mode>
-  			      // Запуск таймера для отслеживания таймаута
-  			      Delay_start=1;
+			// Запуск таймера для отслеживания таймаута
+			Delay_start=1;
  8000e5a:	4b0e      	ldr	r3, [pc, #56]	; (8000e94 <main+0x4cc>)
  8000e5c:	2201      	movs	r2, #1
  8000e5e:	701a      	strb	r2, [r3, #0]
-  			      Ms_Delay=0;
+			Ms_Delay=0;
  8000e60:	4b0d      	ldr	r3, [pc, #52]	; (8000e98 <main+0x4d0>)
  8000e62:	2200      	movs	r2, #0
  8000e64:	601a      	str	r2, [r3, #0]
-  			    AccessRadio=1 ;
+			AccessRadio=1 ;
  8000e66:	4b0d      	ldr	r3, [pc, #52]	; (8000e9c <main+0x4d4>)
  8000e68:	2201      	movs	r2, #1
  8000e6a:	701a      	strb	r2, [r3, #0]
  8000e6c:	e002      	b.n	8000e74 <main+0x4ac>
-  	 		  } else   AccessRadio=0;
+		} else   AccessRadio=0;
  8000e6e:	4b0b      	ldr	r3, [pc, #44]	; (8000e9c <main+0x4d4>)
  8000e70:	2200      	movs	r2, #0
  8000e72:	701a      	strb	r2, [r3, #0]
-	  if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
+		if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
  8000e74:	e5de      	b.n	8000a34 <main+0x6c>
  8000e76:	bf00      	nop
  8000e78:	20000030 	.word	0x20000030
@@ -2638,23 +2630,23 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  8001236:	b082      	sub	sp, #8
  8001238:	af00      	add	r7, sp, #0
  800123a:	6078      	str	r0, [r7, #4]
-	  if(huart == &huart2)
+	if(huart == &huart2)
  800123c:	687b      	ldr	r3, [r7, #4]
  800123e:	4a18      	ldr	r2, [pc, #96]	; (80012a0 <HAL_UART_RxCpltCallback+0x6c>)
  8001240:	4293      	cmp	r3, r2
  8001242:	d129      	bne.n	8001298 <HAL_UART_RxCpltCallback+0x64>
-	  {
-		  ReadRdy=1;
+	{
+		ReadRdy=1;
  8001244:	4b17      	ldr	r3, [pc, #92]	; (80012a4 <HAL_UART_RxCpltCallback+0x70>)
  8001246:	2201      	movs	r2, #1
  8001248:	701a      	strb	r2, [r3, #0]
-		  reciveTime=HAL_GetTick();
+		reciveTime=HAL_GetTick();
  800124a:	f000 fb8b 	bl	8001964 <HAL_GetTick>
  800124e:	4602      	mov	r2, r0
  8001250:	4b15      	ldr	r3, [pc, #84]	; (80012a8 <HAL_UART_RxCpltCallback+0x74>)
  8001252:	601a      	str	r2, [r3, #0]
-		  // Заносим пришедший байт в массив
-		  BuffRx[countRx]=data;
+		// Заносим пришедший байт в массив
+		BuffRx[countRx]=data;
  8001254:	4b15      	ldr	r3, [pc, #84]	; (80012ac <HAL_UART_RxCpltCallback+0x78>)
  8001256:	781b      	ldrb	r3, [r3, #0]
  8001258:	461a      	mov	r2, r3
@@ -2662,46 +2654,45 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  800125c:	7819      	ldrb	r1, [r3, #0]
  800125e:	4b15      	ldr	r3, [pc, #84]	; (80012b4 <HAL_UART_RxCpltCallback+0x80>)
  8001260:	5499      	strb	r1, [r3, r2]
-		  if(countRx==MaxBuffOfCKT-1)
+		if(countRx==MaxBuffOfCKT-1)
  8001262:	4b12      	ldr	r3, [pc, #72]	; (80012ac <HAL_UART_RxCpltCallback+0x78>)
  8001264:	781b      	ldrb	r3, [r3, #0]
  8001266:	2b2a      	cmp	r3, #42	; 0x2a
  8001268:	d10b      	bne.n	8001282 <HAL_UART_RxCpltCallback+0x4e>
-		  {
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+		{
+		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
  800126a:	2201      	movs	r2, #1
  800126c:	2108      	movs	r1, #8
  800126e:	4812      	ldr	r0, [pc, #72]	; (80012b8 <HAL_UART_RxCpltCallback+0x84>)
  8001270:	f001 f9e8 	bl	8002644 <HAL_GPIO_WritePin>
-			  // Запрещаем 4 команду
-			  Resolve4com=0;
+		  // Запрещаем 4 команду
+		  Resolve4com=0;
  8001274:	4b11      	ldr	r3, [pc, #68]	; (80012bc <HAL_UART_RxCpltCallback+0x88>)
  8001276:	2200      	movs	r2, #0
  8001278:	701a      	strb	r2, [r3, #0]
-			  // Устанавливаем флаг того, что посылка принята
-			  Readflag=1;
+		  // Устанавливаем флаг того, что посылка принята
+		  Readflag=1;
  800127a:	4b11      	ldr	r3, [pc, #68]	; (80012c0 <HAL_UART_RxCpltCallback+0x8c>)
  800127c:	2201      	movs	r2, #1
  800127e:	701a      	strb	r2, [r3, #0]
  8001280:	e005      	b.n	800128e <HAL_UART_RxCpltCallback+0x5a>
-		  }
-		  else
-		  {
-			  countRx++;
+		}
+		else
+		{
+		  countRx++;
  8001282:	4b0a      	ldr	r3, [pc, #40]	; (80012ac <HAL_UART_RxCpltCallback+0x78>)
  8001284:	781b      	ldrb	r3, [r3, #0]
  8001286:	3301      	adds	r3, #1
  8001288:	b2da      	uxtb	r2, r3
  800128a:	4b08      	ldr	r3, [pc, #32]	; (80012ac <HAL_UART_RxCpltCallback+0x78>)
  800128c:	701a      	strb	r2, [r3, #0]
-		  }
-		  HAL_UART_Receive_IT(&huart2, &data, 1);
+		}
+		HAL_UART_Receive_IT(&huart2, &data, 1);
  800128e:	2201      	movs	r2, #1
  8001290:	4907      	ldr	r1, [pc, #28]	; (80012b0 <HAL_UART_RxCpltCallback+0x7c>)
  8001292:	4803      	ldr	r0, [pc, #12]	; (80012a0 <HAL_UART_RxCpltCallback+0x6c>)
  8001294:	f003 f808 	bl	80042a8 <HAL_UART_Receive_IT>
-
-	  }
+	}
 }
  8001298:	bf00      	nop
  800129a:	3708      	adds	r7, #8
@@ -2731,7 +2722,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  80012d0:	4293      	cmp	r3, r2
  80012d2:	d107      	bne.n	80012e4 <HAL_TIM_PeriodElapsedCallback+0x20>
 	{
-		if(LedMode1==1) // 1 светодиод
+		if(LedMode==1) // 1 светодиод
  80012d4:	4b06      	ldr	r3, [pc, #24]	; (80012f0 <HAL_TIM_PeriodElapsedCallback+0x2c>)
  80012d6:	781b      	ldrb	r3, [r3, #0]
  80012d8:	2b01      	cmp	r3, #1
@@ -2790,7 +2781,7 @@ void SysTick_Handler(void)
 		}
 	}
   /* USER CODE END SysTick_IRQn 0 */
-  HAL_IncTick();
+	HAL_IncTick();
  8001322:	f000 fb0b 	bl	800193c <HAL_IncTick>
   /* USER CODE BEGIN SysTick_IRQn 1 */
 

@@ -93,7 +93,8 @@ static void MX_TIM10_Init(void);
 #define RadioMaxBuff 42
 // Количество элементов, приходящих с ЦКТ
 #define MaxBuffOfCKT 43
-
+// Количество пакетов, через которые мы начинаем записывать
+#define CountOfWriteToSD 5
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -111,7 +112,6 @@ UINT bytesWrote;
 // Для чтения
 UINT bytesRead;
 /////////////////////////
-
 // время отсчета микрконтроллера в милисекундах
 uint32_t reciveTime=0;
 // CRC16
@@ -156,6 +156,16 @@ uint8_t BuffSDRead[50];
 uint8_t BuffSDfileinfo[30]="\t\tFile info\nNumber of files:X;";
 //Массив для записи данных на SD в  файл InfoSD.txt
 uint8_t BufFileInfoWr[30];
+// Задержка в мс
+uint32_t Ms_Delay=0;
+// Начало задержки
+uint8_t Delay_start=0;
+// Метка об окончании задержки
+uint8_t Timeout=0;
+// Длительность задержки
+uint32_t TimeDelay=5000;
+// Счетчик пришедших с ЦКт посылок
+uint8_t CountCKT=0;
 
 // Таблица CRC16
 const unsigned short Crc16Table[256] = {
@@ -201,6 +211,12 @@ unsigned short Crc16(unsigned char * pcBlock, unsigned short len)
         crc = (crc << 8) ^ Crc16Table[(crc >> 8) ^ *pcBlock++];
 
     return crc;
+}
+// Функция пользовательской задержки
+void UserDelayStart(uint32_t Delay)
+{
+	TimeDelay=Delay;
+	Delay_start=1;
 }
 // Функция передачи по радиоканалу
 void CommandToRadio(uint8_t command)
@@ -355,7 +371,6 @@ void CommandHistoryWrite(uint8_t command)
 		while(1);
 	}
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
-
 }
 // Запись в файл InfoSD.txt метки о включении питания
 void HistoryOnOffUSI(void)
@@ -383,6 +398,22 @@ void HistoryOnOffUSI(void)
 	}
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 }
+// Запрет записи на SD карту и закрытие открытого файла
+void StopWriteToSD(void)
+{
+	if(ResolveSDWrite==1)
+	{
+		fres=f_close(&fil);
+		if(fres == FR_OK)
+		{ // Если проблема с флешкой  выключаем 1 светодиод
+		} else
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+			while(1);
+		}
+	}
+	ResolveSDWrite=0; // закрываем доступ к записи на SD данных с ЦКТ
+}
 // Функция синхронизации Usartа с ЦКТ
 void SyncCKT(void)
 {
@@ -398,19 +429,17 @@ void SyncCKT(void)
 // Команда начала записи на SD карту
 void RXCommande1(void)
 {
+	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
+	StopWriteToSD();
 	// Запись в память номера файла, на котором мы находимся
 	CountFileNow=ReadNumofFileSD();
-	if(CountFileNow>=9)
-	{
-		CountFileNow=0;
-	}
+	if(CountFileNow>=9) CountFileNow=0;
 	CountFileNow++;
 	WriteNumofFileSD(CountFileNow);
 	//Записываем команду в историю
 	CommandHistoryWrite(1);
-	// Открываем или создаем новый файл
+	// создаем новый файл
 	fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_CREATE_ALWAYS | FA_WRITE);
-
 	if(fres == FR_OK)
 	{ // Если проблема с флешкой  выключаем 1 светодиод
 	} else
@@ -426,6 +455,8 @@ void RXCommande1(void)
 // Команда включения клапаном
 void RXCommande2(void)
 {
+	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
+	StopWriteToSD();
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     //Записываем команду в историю
@@ -438,14 +469,20 @@ void RXCommande2(void)
 // Команда включения двигателя
 void RXCommande3(void)
 {
+	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
+	StopWriteToSD();
 	// Подаем единицу на двигатель
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
-	// Ждем 5 секунд
-	HAL_Delay(5000);
-	// Убираем единицу с двигателя
-	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
     //Записываем команду в историю
     CommandHistoryWrite(3);
+    if(TX_RX_Radio[1]==0)
+    {
+        // Запускаем задержку
+        UserDelayStart(5000);
+    } else
+    {
+    	UserDelayStart((uint32_t)(TX_RX_Radio[1]*1000));
+    }
 	// Отсылаем ответ
 	ModeRadio=1;
     CommandToRadio(3);
@@ -458,17 +495,8 @@ void RXCommande4(void)
 // Команда начала закрытия файла на SD карте
 void RXCommande5(void)
 {
-	///ФЛЕШКА
-    // Закрываем файл
-	fres=f_close(&fil);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
-	{
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-		while(1);
-	}
-    ResolveSDWrite=0; // Закрываем доступ к записи на SD
+	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
+	StopWriteToSD();
     //Записываем команду в историю
     CommandHistoryWrite(5);
 	fres=f_mount(NULL, "", 0);
@@ -486,6 +514,8 @@ void RXCommande5(void)
 // Команда закрытия клапана
 void RXCommande6(void)
 {
+	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
+	StopWriteToSD();
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
     //Записываем команду в историю
@@ -632,53 +662,59 @@ int main(void)
 				Rf96_Standby();
 			    // Ожидаем команду
 			    Rf96_Lora_RX_mode();
-
 			}
 		}
-
-		if(ResolveSDWrite==1 && ReadyToWrite==1) //  Если разрешена запись на Sd карту и если есть что записывать
+		//  Если разрешена запись на Sd карту и если есть что записывать
+		if(ResolveSDWrite==1 && ReadyToWrite==1)
 		{
 			// Запись на SD
 			DataConv();
 			fres = f_write(&fil, SDbufWrite, 161, &bytesWrote);
 			if (fres != FR_OK)
 			{
-				while(1)
-				{
-					// Выключение 1 светодиода, если какая-то проблема с записью на SD
-					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-				}
-			}
-			if(RadioIrq==1)  // Если пришел запрос на отправку измерений по радио
-			{
-				for(uint8_t i=0;i<RadioMaxBuff-3;i++)
-				{
-					TX_RX_Radio[i+1]=BuffMidW[i+4];
-				}
-				// заносим в 1 элемент 4 команду
-				TX_RX_Radio[0]=4;
-				// Отсылаем ответ
-			    Rf96_Lora_TX_mode();
-				//Подсчет CRC16
-				CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
-				TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
-				TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
-				// Установка адреса TX в буфере FIFO
-				Rf96_TX_FifoAdr(0x80);
-				// Устанавливает указатель на адрес начала массива TX в FIFO
-				Rf96_FIFO_point(0x80);
-			    // Очистка флагов
-				Rf96_LoRaClearIrq();
-			    // Отправка посылки
-				Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
-                // Запрещаем передачу по радио
-				RadioIrq=0;
-				// следующее Прерывание будет по передаче
-				ModeRadio=1;
+				// Выключение 1 светодиода, если какая-то проблема с записью на SD
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
 			}
 			// Синхронизация файла и sd карты
 			fres = f_sync(&fil);
 			ReadyToWrite=0;
+		}
+		// Если пришел запрос на отправку измерений по радио
+		if(RadioIrq==1 && ResolveSDWrite==1)
+		{
+			for(uint8_t i=0;i<RadioMaxBuff-3;i++)
+			{
+				TX_RX_Radio[i+1]=BuffMidW[i+4];
+			}
+			// заносим в 1 элемент 4 команду
+			TX_RX_Radio[0]=4;
+			// Отсылаем ответ
+		    Rf96_Lora_TX_mode();
+			//Подсчет CRC16
+			CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
+			TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
+			TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
+			// Установка адреса TX в буфере FIFO
+			Rf96_TX_FifoAdr(0x80);
+			// Устанавливает указатель на адрес начала массива TX в FIFO
+			Rf96_FIFO_point(0x80);
+		    // Очистка флагов
+			Rf96_LoRaClearIrq();
+		    // Отправка посылки
+			Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
+            // Запрещаем передачу по радио
+			RadioIrq=0;
+			// следующее Прерывание будет по передаче
+			ModeRadio=1;
+		}
+		// Окончание задержки
+		if(Timeout==1)
+		{
+			// Для 3 команды
+			// Убираем единицу с двигателя
+			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
+			Timeout=0;
 		}
 
 
@@ -698,11 +734,11 @@ void SystemClock_Config(void)
   RCC_OscInitTypeDef RCC_OscInitStruct = {0};
   RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
 
-  /** Configure the main internal regulator output voltage
+  /** Configure the main internal regulator output voltage 
   */
   __HAL_RCC_PWR_CLK_ENABLE();
   __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
-  /** Initializes the CPU, AHB and APB busses clocks
+  /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
@@ -718,13 +754,13 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
-  /** Activate the Over-Drive mode
+  /** Activate the Over-Drive mode 
   */
   if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
-  /** Initializes the CPU, AHB and APB busses clocks
+  /** Initializes the CPU, AHB and APB busses clocks 
   */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
@@ -1054,10 +1090,10 @@ static void MX_USART3_UART_Init(void)
 
 }
 
-/**
+/** 
   * Enable DMA controller clock
   */
-static void MX_DMA_Init(void)
+static void MX_DMA_Init(void) 
 {
 
   /* DMA controller clock enable */
@@ -1099,13 +1135,13 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOA, acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0|acel3_Pin|acel3_3_Pin|SPI3_nss_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|SSV_Pin|acel2_Pin|acel2_2_Pin
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|SSV_Pin|acel2_Pin|acel2_2_Pin 
                           |Motor_Pin|GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
@@ -1121,14 +1157,8 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_10;
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  GPIO_InitStruct.Pull = GPIO_NOPULL;
-  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
-
-  /*Configure GPIO pins : acel3_Pin acel3_3_Pin SPI3_nss_Pin */
-  GPIO_InitStruct.Pin = acel3_Pin|acel3_3_Pin|SPI3_nss_Pin;
+  /*Configure GPIO pins : PA0 acel3_Pin acel3_3_Pin SPI3_nss_Pin */
+  GPIO_InitStruct.Pin = GPIO_PIN_0|acel3_Pin|acel3_3_Pin|SPI3_nss_Pin;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
@@ -1162,6 +1192,12 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
   HAL_GPIO_Init(acel2_GPIO_Port, &GPIO_InitStruct);
 
+  /*Configure GPIO pin : PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
   /*Configure GPIO pins : PB3 PB4 PB5 */
   GPIO_InitStruct.Pin = GPIO_PIN_3|GPIO_PIN_4|GPIO_PIN_5;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
@@ -1185,15 +1221,24 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		// Если данные синхронизированы
 		if(BuffCkt[0]==0x7C && BuffCkt[1]==0x6E && BuffCkt[2]==0xA1 && BuffCkt[3]==0x2C )
 		{
-			// Готов к записи
-			ReadyToWrite=1;
-			//  Время в мс, когда пришли данные
-			reciveTime = HAL_GetTick();
-			// Перезаписываем данные в массив посредник
-			for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+			if(CountCKT==CountOfWriteToSD)
 			{
-				BuffMidW[i]=BuffCkt[i];
+				CountCKT=0;
+				// Готов к записи
+				ReadyToWrite=1;
+				//  Время в мс, когда пришли данные
+				reciveTime = HAL_GetTick();
+				// Перезаписываем данные в массив посредник
+				for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+				{
+					BuffMidW[i]=BuffCkt[i];
+				}
+
+			} else
+			{
+				CountCKT++;
 			}
+
 		} else  // Если данные не синхронизированы
 		{
 			readFlag=1;
@@ -1214,6 +1259,31 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		HAL_UART_Abort(&huart5);
 		HAL_UART_Receive_DMA(&huart5, BuffCkt, MaxBuffOfCKT);
 	}
+}
+
+// Прерывание по системному таймеру
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+	if(Delay_start==1)
+	{
+		if(Ms_Delay<TimeDelay)
+		{
+			Ms_Delay++;
+		}
+		else
+		{
+			// произошло прерывание
+			Timeout=1;
+			Delay_start=0;
+			Ms_Delay=0;
+		}
+	}
+  /* USER CODE END SysTick_IRQn 0 */
+	HAL_IncTick();
+  /* USER CODE BEGIN SysTick_IRQn 1 */
+
+  /* USER CODE END SysTick_IRQn 1 */
 }
 /* USER CODE END 4 */
 
@@ -1238,7 +1308,7 @@ void Error_Handler(void)
   * @retval None
   */
 void assert_failed(uint8_t *file, uint32_t line)
-{
+{ 
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */

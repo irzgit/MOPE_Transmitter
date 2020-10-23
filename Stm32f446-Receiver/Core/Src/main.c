@@ -104,6 +104,8 @@ uint8_t RadioTimeoutRx=0;
 uint32_t Ms_Delay=0;
 // Начало задержки
 uint8_t Delay_start=0;
+// Переменная отвечающая за занятость прима по Linux
+uint8_t UsartRXflagbusy=0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -210,6 +212,11 @@ void CommandToRadio(uint8_t command)
 	for(uint8_t i=0;i<RadioMaxBuff;i++)
 	{
 		TX_RX_Radio[i]=0;
+	}
+	if(command==3)
+	{
+		// Заносим задержку в секундах
+		TX_RX_Radio[1]=BuffRx[1];
 	}
     // Заносим команду
 	TX_RX_Radio[CommIndex]=command;
@@ -384,6 +391,8 @@ int main(void)
 			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
 			// Очистка флагов
 			Rf96_LoRaClearIrq();
+			//Разрешаем прием по Usartу
+			UsartRXflagbusy=0;
 
 			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
 			{
@@ -692,6 +701,9 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1|GPIO_PIN_2|GPIO_PIN_3, GPIO_PIN_SET);
 
   /*Configure GPIO pin Output Level */
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_0, GPIO_PIN_RESET);
+
+  /*Configure GPIO pin Output Level */
   HAL_GPIO_WritePin(GPIOB, GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
@@ -707,8 +719,15 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOC, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : PA0 PA10 */
-  GPIO_InitStruct.Pin = GPIO_PIN_0|GPIO_PIN_10;
+  /*Configure GPIO pin : PA0 */
+  GPIO_InitStruct.Pin = GPIO_PIN_0;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+
+  /*Configure GPIO pin : PA10 */
+  GPIO_InitStruct.Pin = GPIO_PIN_10;
   GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
@@ -736,20 +755,26 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		ReadRdy=1;
 		reciveTime=HAL_GetTick();
-		// Заносим пришедший байт в массив
-		BuffRx[countRx]=data;
-		if(countRx==MaxBuffOfCKT-1)
-		{
-		  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-		  // Запрещаем 4 команду
-		  Resolve4com=0;
-		  // Устанавливаем флаг того, что посылка принята
-		  Readflag=1;
-		}
-		else
-		{
-		  countRx++;
-		}
+        // Если предыдущая посылка не обработана
+		//if(UsartRXflagbusy==0)
+		//{
+			// Заносим пришедший байт в массив
+			BuffRx[countRx]=data;
+			if(countRx==MaxBuffOfCKT-1)
+			{
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			  // Запрещаем 4 команду
+			  Resolve4com=0;
+			  // Устанавливаем флаг того, что посылка принята
+			  Readflag=1;
+			  UsartRXflagbusy=1;
+			}
+			else
+			{
+			  countRx++;
+			}
+		//}
+
 		HAL_UART_Receive_IT(&huart2, &data, 1);
 	}
 }
@@ -771,12 +796,14 @@ void SysTick_Handler(void)
   /* USER CODE BEGIN SysTick_IRQn 0 */
 	if(Delay_start==1)
 	{
-		if(Ms_Delay<7000)
+		if(Ms_Delay<5000)
 		{
 			Ms_Delay++;
 		}
 		else
 		{
+			Delay_start=0;
+			Ms_Delay=0;
 			RadioTimeoutRx=1; // произошло прерывание
 		}
 	}

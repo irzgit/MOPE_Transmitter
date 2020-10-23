@@ -92,8 +92,10 @@ void Rf96_FreqChoose(uint8_t freq_value)
 // Выбираем выходную мощность 0 -20 Дб, 1- 17 Дб, 2 - 14 Дб, 3 - 11 Дб
 void Rf96_OutPower(uint8_t Power_value)
 {
-	SPIWrite(LR_RegPaConfig,Rf96_PowerTbl[Power_value]);
-	SPIWrite(0x5A,0x87);  // Для ноги PA устанавливает Pmax до +20 Дб при 0x87  и оставляет по дефолту при 0x84 ???????
+	//SPIWrite(LR_RegPaConfig,Rf96_PowerTbl[Power_value]);
+	SPIWrite(LR_RegPaConfig,0x0F); //14 Дб
+	//SPIWrite(0x5A,0x87);  // Для ноги PA устанавливает Pmax до +20 Дб при 0x87  и оставляет по дефолту при 0x84
+	SPIWrite(0x5A,0x84); // обычный режим( без макс усиления: до 14 Дб)
 }
 // защита по току( максимальный ток усилителя) ( важно ее правильно настроить, поскольку выходная мощность зависит от тока)
 // 0 -Без ограничения по току, 1 - 100 мА , 2 - 120 мА, 3 -200 мА
@@ -116,7 +118,8 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 {
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
-	SPIWrite(LR_RegModemConfig1,0x0E); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
+	//SPIWrite(LR_RegModemConfig1,0x0E); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
+	SPIWrite(LR_RegModemConfig1,0x21); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
 	//SPIWrite(LR_RegModemConfig1,0x8E); // с CRC
 	//SPIWrite(LR_RegDetectOptimize,0xC5); // Только для sf=6
 	//SPIWrite(LR_RegDetecionThreshold,0x0C); // Только для sf=6
@@ -128,7 +131,7 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 void Rf96_SF_LoadCRC_SymbTimeout(uint8_t SF_value, uint8_t PayloadCrc_value, uint16_t SymbTimeout_value)
 {
 	//SPIWrite(LR_RegModemConfig2,((Rf96_SpreadFactorTbl[SF_value]<<4)+(PayloadCrc_value<<2)+(SymbTimeout_value>>8)));
-	SPIWrite(LR_RegModemConfig2,0xC4);  // SF=12
+	SPIWrite(LR_RegModemConfig2,0xB4);  // SF=11
 	SPIWrite(LR_RegSymbTimeoutLsb,(uint8_t)SymbTimeout_value);
 }
 //Устанавливаем длину преамбулы в байтах: 4+PreambLen_value
@@ -228,6 +231,8 @@ void Rf96_Lora_init(void)
 	Rf96_SF_LoadCRC_SymbTimeout(6,1,0x0FF);
 	// Устанавливаем длину преамбулы
 	Rf96_Preamble(8);
+	SPIWrite(0x37,0x0A);
+	SPIWrite(0x31,0xA3);
 	// Заходим в StandBy
 	Rf96_Standby();
 }

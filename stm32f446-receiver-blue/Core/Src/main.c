@@ -28,12 +28,61 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-uint8_t readFlag=0;
-uint8_t Buff_rx[70];
-uint8_t Buff_tx[20];
+// Индекс комманды в массиве, пришедшего по радиоканалу
+#define CommIndex 0
+// Количество элементов в массиве для радиопередачи
+#define RadioMaxBuff 42
+// Количество элементов, приходящих с ЦКТ
+#define MaxBuffOfCKT 43
+
+
+
+uint8_t Buff_rx[200];
+uint8_t Buff_tx[200];
 uint8_t str[29];
+
+//CRC8
+uint8_t CRC_8c=0;
+//CRC16
+uint16_t CRC_c=0;
+// Массив приемопередачи по радиоканалу
+uint8_t TX_RX_Radio[RadioMaxBuff];
+// Буффер TX usart2
+uint8_t BuffTx[MaxBuffOfCKT];
+// Буффер RX usart2
+uint8_t BuffRx[MaxBuffOfCKT];
+// Счетчик количества пришедших байт с linux
+uint8_t countRx=0;
+// Счетчик количества пришедших байт с wm-sm-42
+uint8_t countWm=0;
+// Переменная для получения 1 байта, пришедшего по usartу
+uint8_t data=0;
+// Переменная для получения 1 байта, пришедшего с wm-sm-42
+uint8_t dataWm=0;
+// Маркер того, что пришли новые данные с usart
+uint8_t Readflag=0;
+// Маркер того, что пришли новые данные с wm-sm-42
+uint8_t ReadflagWm=0;
+// Переменная рарешающая постоянный запрос данных
+uint8_t Resolve4com=0;
+// Переменные, отвечающие за режимы светодиодов
+uint8_t LedMode=0;
+// Для фильтрации помех с Usart
+uint8_t ReadRdy=0;
+// Текущее время в мс
 uint32_t reciveTime=0;
-uint8_t UsartStatus=0;
+// Запрет/разрешение на отправку команд
+uint8_t AccessRadio=0;
+// Переменная по таймауту
+uint8_t RadioTimeoutRx=0;
+// Задержка в мс
+uint32_t Ms_Delay=0;
+// Начало задержки
+uint8_t Delay_start=0;
+// Переменная отвечающая за занятость прима по Linux
+uint8_t UsartRXflagbusy=0;
+
+
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -42,24 +91,12 @@ uint8_t UsartStatus=0;
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-// Парсер
-//первый акселерометр
-int xIntSumFirst, yIntSumFirst, zIntSumFirst;
-int x5First, x60First, x65First, y8First, y90First, y95First, z11First, z120First, z125First;
-char xvalFirst[7], yvalFirst[7], zvalFirst[7];
 
-//второй акслерометр
-int xIntSumSecond, yIntSumSecond, zIntSumSecond;
-int x5Second, x60Second, x65Second, y8Second, y90Second, y95Second, z11Second, z120Second, z125Second;
-char xvalSecond[7], yvalSecond[7], zvalSecond[7];
-
-//третий акселерометр
-int xIntSumThird, yIntSumThird, zIntSumThird;
-int x5Third, x60Third, x65Third, y8Third, y90Third, y95Third, z11Third, z120Third, z125Third;
-char xvalThird[7], yvalThird[7], zvalThird[7], str1[67];
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
+TIM_HandleTypeDef htim6;
+
 UART_HandleTypeDef huart2;
 UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_usart2_tx;
@@ -68,16 +105,15 @@ DMA_HandleTypeDef hdma_usart6_rx;
 /* USER CODE BEGIN PV */
 uint8_t buf_Reset[4]={"ATZ\r"};
 
-uint8_t buf_paylen[18]={"AT+WREG=0x21,0x1D\r"}; // Запись в 0x22 регистр
+uint8_t buf_paylen[18]={"AT+WREG=0x21,0x2A\r"}; // Запись в 0x22 регистр
 uint8_t buf_preamlen[18]={"AT+WREG=0x20,0x08\r"}; // Запись в 0x21 регистр
 
 uint8_t buf_EchoOff[6]={"ATE=0\r"}; //выключение эха
 uint8_t buf_com1[13]={"AT+DEFMODE=0\r"};
-uint8_t buf_com2[37]={"AT+RF=20,868000000,7,2,1,0,8,0,1,0,0\r"};
+uint8_t buf_com2[37]={"AT+RF=14,868000000,11,0,4,0,8,0,1,0,0\r"};
 uint8_t buf_com3_TX_mode[13]={"AT+DEFMODE=4\r"};
 uint8_t buf_com3_RX_mode[13]={"AT+DEFMODE=5\r"};
-uint8_t buf_com_Tx[64]={"AT+TXT=1,100000000000000000000000000000000000000000000000000000\r"};
-uint16_t CRC_c=0;
+uint8_t buf_com_Tx[52]={"AT+TXT=1,100000000000000000000000000000000000000000\r"};
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -86,6 +122,7 @@ static void MX_GPIO_Init(void);
 static void MX_DMA_Init(void);
 static void MX_USART2_UART_Init(void);
 static void MX_USART6_UART_Init(void);
+static void MX_TIM6_Init(void);
 /* USER CODE BEGIN PFP */
 
 
@@ -177,109 +214,62 @@ void WMSM42InitRX(void)
 	  HAL_UART_Receive_DMA(&huart6, Buff_rx, 62+4);
 
 }
-
-
-// Парсер
-void transmit(uint8_t str[27])
+void WMSM42Init(void)
 {
+	//Начальная инфа
+	HAL_UART_Receive_IT(&huart6, &dataWm, 1);
+	HAL_Delay(1000);
+	ReadflagWm=0;
+	countWm=0;
 
-				// первый акселерометр
-				// Ось Х
-				xIntSumFirst = (str[0] & 0x0F) * 10 + (str[1] >> 4); // целочисленная сумма X
-				x5First = str[1] & 0x0F; //перевод правого бита 5го байта
-				x60First = str[2] >> 4; //перевод левого бита 6го байта
-				x65First = str[2] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalFirst, "+%02d.%d%d ",xIntSumFirst, x5First, x60First);
-				if((str[0] >> 4) == 0x01)
-					xvalFirst[0] = '-';
-
-				// Ось Y
-				yIntSumFirst = (str[3] & 0x0F) * 10 + (str[4] >> 4);	// целочисленная сумма Y
-				y8First = str[4] & 0x0F; //перевод правого бита 8го байта
-				y90First = str[5] >> 4; //перевод левого бита 9го байта
-				y95First = str[5] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalFirst, "+%02d.%d%d ", yIntSumFirst, y8First, y90First);
-				if((str[3] >> 4) == 0x01)
-					yvalFirst[0] = '-';
-
-				// Ось Z
-				zIntSumFirst = (str[6] & 0x0F) * 10 + (str[7] >> 4); //целочисленная сумма Z
-				z11First = str[7] & 0x0F; //перевод правого бита 11го байта
-				z120First = str[8] >> 4; //перевод левого бита 12го байта
-				z125First = str[8] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalFirst, "+%02d.%d%d ", zIntSumFirst, z11First, z120First);
-				if((str[6] >> 4) == 0x01)
-					zvalFirst[0] = '-';
-
-				// второй акселерометр
-				// Ось Х
-				xIntSumSecond = (str[9] & 0x0F) * 10 + (str[10] >> 4); // целочисленная сумма X
-				x5Second = str[10] & 0x0F; //перевод правого бита 5го байта
-				x60Second = str[11] >> 4; //перевод левого бита 6го байта
-				x65Second = str[11] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalSecond, "+%02d.%d%d ",xIntSumSecond, x5Second, x60Second);
-				if((str[9] >> 4) == 0x01)
-					xvalSecond[0] = '-';
-
-				// Ось Y
-				yIntSumSecond = (str[12] & 0x0F) * 10 + (str[13] >> 4);	// целочисленная сумма Y
-				y8Second = str[13] & 0x0F; //перевод правого бита 8го байта
-				y90Second = str[14] >> 4; //перевод левого бита 9го байта
-				y95Second = str[14] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalSecond, "+%02d.%d%d ", yIntSumSecond, y8Second, y90Second);
-				if((str[12] >> 4) == 0x01)
-					yvalSecond[0] = '-';
-
-				// Ось Z
-				zIntSumSecond = (str[15] & 0x0F) * 10 + (str[16] >> 4); //целочисленная сумма Z
-				z11Second = str[16] & 0x0F; //перевод правого бита 11го байта
-				z120Second = str[17] >> 4; //перевод левого бита 12го байта
-				z125Second = str[17] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalSecond, "+%02d.%d%d ", zIntSumSecond, z11Second, z120Second);
-				if((str[15] >> 4) == 0x01)
-					zvalSecond[0] = '-';
-
-				// третий акселерометр
-				// Ось Х
-				xIntSumThird = (str[18] & 0x0F) * 10 + (str[19] >> 4); // целочисленная сумма X
-				x5Third = str[19] & 0x0F; //перевод правого бита 5го байта
-				x60Third = str[20] >> 4; //перевод левого бита 6го байта
-				x65Third = str[20] & 0x0F; //перевод правого бита 6го байта
-				sprintf(xvalThird, "+%02d.%d%d ",xIntSumThird, x5Third, x60Third);
-				if((str[18] >> 4) == 0x01)
-					xvalThird[0] = '-';
-
-				// Ось Y
-				yIntSumThird = (str[21] & 0x0F) * 10 + (str[22] >> 4);	// целочисленная сумма Y
-				y8Third = str[22] & 0x0F; //перевод правого бита 8го байта
-				y90Third = str[23] >> 4; //перевод левого бита 9го байта
-				y95Third = str[23] & 0x0F; //перевод правого бита 9го байта
-				sprintf(yvalThird, "+%02d.%d%d ", yIntSumThird, y8Third, y90Third);
-				if((str[21] >> 4) == 0x01)
-					yvalThird[0] = '-';
-
-				// Ось Z
-				zIntSumThird = (str[24] & 0x0F) * 10 + (str[25] >> 4); //целочисленная сумма Z
-				z11Third = str[25] & 0x0F; //перевод правого бита 11го байта
-				z120Third = str[26] >> 4; //перевод левого бита 12го байта
-				z125Third = str[26] & 0x0F; //перевод правого бита 12го байта
-				sprintf(zvalThird, "+%02d.%d%d ", zIntSumThird, z11Third, z120Third);
-				if((str[24] >> 4) == 0x01)
-					zvalThird[0] = '-';
-
-			sprintf(str1, "%s%s%s%s%s%s%s%s%s\n", xvalFirst, yvalFirst, zvalFirst, xvalSecond, yvalSecond, zvalSecond, xvalThird, yvalThird, zvalThird);
-	//HAL_UART_Abort(&huart2);
-			if(UsartStatus==HAL_BUSY)
-			{
-			//	HAL_UART_Abort(&huart2);
-			//	HAL_UART_Init(&huart2);
-			}
-			UsartStatus=HAL_UART_Transmit_IT(&huart2, (uint8_t*)str1, 64);
-
-
-
-
+	HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100); //отключаем эхо
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+	HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100); // Спящий режим
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+	HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100); // Настройки
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+	HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100); // Длина посылки
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+	HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100); // Длина преамбулы
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
 }
+void WMSM42TXmode(void)
+{
+	HAL_UART_Transmit(&huart6, buf_com3_TX_mode, sizeof(buf_com3_TX_mode),100);
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+}
+void WMSM42RXmode(void)
+{
+	HAL_UART_Transmit(&huart6, buf_com3_RX_mode, sizeof(buf_com3_RX_mode),100);
+	HAL_Delay(100);
+	ReadflagWm=0;
+	countWm=0;
+}
+void WMSM42TXsend(uint8_t* mass)
+{
+	for(uint8_t i=9;i<51;i++)
+	{
+		buf_com_Tx[i]=mass[i-9];
+	}
+	HAL_UART_Transmit(&huart6, buf_com_Tx, sizeof(buf_com_Tx),100);
+	HAL_Delay(2000);
+	ReadflagWm=0;
+	countWm=0;
+}
+
+
 
 // Функция перевода массива чисел в массив Hex символов
 void Data8_toMassHex(uint8_t* Data,uint8_t DataLen, uint8_t* pcBlock, uint8_t StrartMass)
@@ -335,6 +325,7 @@ void Mass_toData8(uint8_t *pcBlock,uint8_t* data8, unsigned short len) //rx_buff
 
 }
 
+// Таблица CRC16
 const unsigned short Crc16Table[256] = {
     0x0000, 0x1021, 0x2042, 0x3063, 0x4084, 0x50A5, 0x60C6, 0x70E7,
     0x8108, 0x9129, 0xA14A, 0xB16B, 0xC18C, 0xD1AD, 0xE1CE, 0xF1EF,
@@ -369,7 +360,7 @@ const unsigned short Crc16Table[256] = {
     0xEF1F, 0xFF3E, 0xCF5D, 0xDF7C, 0xAF9B, 0xBFBA, 0x8FD9, 0x9FF8,
     0x6E17, 0x7E36, 0x4E55, 0x5E74, 0x2E93, 0x3EB2, 0x0ED1, 0x1EF0
 };
-
+// Расчет CRC16
 unsigned short Crc16(unsigned char * pcBlock, unsigned short len)
 {
     unsigned short crc = 0xFFFF;
@@ -380,8 +371,76 @@ unsigned short Crc16(unsigned char * pcBlock, unsigned short len)
     return crc;
 }
 
+// Таблица CRC8
+const unsigned char Crc8Table[256] = {
+    0x00, 0x31, 0x62, 0x53, 0xC4, 0xF5, 0xA6, 0x97,
+    0xB9, 0x88, 0xDB, 0xEA, 0x7D, 0x4C, 0x1F, 0x2E,
+    0x43, 0x72, 0x21, 0x10, 0x87, 0xB6, 0xE5, 0xD4,
+    0xFA, 0xCB, 0x98, 0xA9, 0x3E, 0x0F, 0x5C, 0x6D,
+    0x86, 0xB7, 0xE4, 0xD5, 0x42, 0x73, 0x20, 0x11,
+    0x3F, 0x0E, 0x5D, 0x6C, 0xFB, 0xCA, 0x99, 0xA8,
+    0xC5, 0xF4, 0xA7, 0x96, 0x01, 0x30, 0x63, 0x52,
+    0x7C, 0x4D, 0x1E, 0x2F, 0xB8, 0x89, 0xDA, 0xEB,
+    0x3D, 0x0C, 0x5F, 0x6E, 0xF9, 0xC8, 0x9B, 0xAA,
+    0x84, 0xB5, 0xE6, 0xD7, 0x40, 0x71, 0x22, 0x13,
+    0x7E, 0x4F, 0x1C, 0x2D, 0xBA, 0x8B, 0xD8, 0xE9,
+    0xC7, 0xF6, 0xA5, 0x94, 0x03, 0x32, 0x61, 0x50,
+    0xBB, 0x8A, 0xD9, 0xE8, 0x7F, 0x4E, 0x1D, 0x2C,
+    0x02, 0x33, 0x60, 0x51, 0xC6, 0xF7, 0xA4, 0x95,
+    0xF8, 0xC9, 0x9A, 0xAB, 0x3C, 0x0D, 0x5E, 0x6F,
+    0x41, 0x70, 0x23, 0x12, 0x85, 0xB4, 0xE7, 0xD6,
+    0x7A, 0x4B, 0x18, 0x29, 0xBE, 0x8F, 0xDC, 0xED,
+    0xC3, 0xF2, 0xA1, 0x90, 0x07, 0x36, 0x65, 0x54,
+    0x39, 0x08, 0x5B, 0x6A, 0xFD, 0xCC, 0x9F, 0xAE,
+    0x80, 0xB1, 0xE2, 0xD3, 0x44, 0x75, 0x26, 0x17,
+    0xFC, 0xCD, 0x9E, 0xAF, 0x38, 0x09, 0x5A, 0x6B,
+    0x45, 0x74, 0x27, 0x16, 0x81, 0xB0, 0xE3, 0xD2,
+    0xBF, 0x8E, 0xDD, 0xEC, 0x7B, 0x4A, 0x19, 0x28,
+    0x06, 0x37, 0x64, 0x55, 0xC2, 0xF3, 0xA0, 0x91,
+    0x47, 0x76, 0x25, 0x14, 0x83, 0xB2, 0xE1, 0xD0,
+    0xFE, 0xCF, 0x9C, 0xAD, 0x3A, 0x0B, 0x58, 0x69,
+    0x04, 0x35, 0x66, 0x57, 0xC0, 0xF1, 0xA2, 0x93,
+    0xBD, 0x8C, 0xDF, 0xEE, 0x79, 0x48, 0x1B, 0x2A,
+    0xC1, 0xF0, 0xA3, 0x92, 0x05, 0x34, 0x67, 0x56,
+    0x78, 0x49, 0x1A, 0x2B, 0xBC, 0x8D, 0xDE, 0xEF,
+    0x82, 0xB3, 0xE0, 0xD1, 0x46, 0x77, 0x24, 0x15,
+    0x3B, 0x0A, 0x59, 0x68, 0xFF, 0xCE, 0x9D, 0xAC
+};
+// Расчет CRC8
+unsigned char Crc8(unsigned char *pcBlock, unsigned char len)
+{
+    unsigned char crc = 0xFF;
 
+    while (len--)
+        crc = Crc8Table[crc ^ *pcBlock++];
 
+    return crc;
+}
+
+// Функция передачи по радиоканалу
+void CommandToRadio(uint8_t command)
+{
+	// Вход в режим передачи
+	WMSM42TXmode();
+	// Обнуляем массив
+	for(uint8_t i=0;i<RadioMaxBuff;i++)
+	{
+		TX_RX_Radio[i]=0;
+	}
+	if(command==3)
+	{
+		// Заносим задержку в секундах
+		TX_RX_Radio[1]=BuffRx[1];
+	}
+    // Заносим команду
+	TX_RX_Radio[CommIndex]=command;
+	//Подсчет CRC16
+	CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
+	TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
+	TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
+    // Отправка посылки
+	WMSM42TXsend(TX_RX_Radio);
+}
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -420,9 +479,21 @@ int main(void)
   MX_DMA_Init();
   MX_USART2_UART_Init();
   MX_USART6_UART_Init();
+  MX_TIM6_Init();
   /* USER CODE BEGIN 2 */
-  WMSM42InitRX();
-  reciveTime=HAL_GetTick();
+  // Индикация включения УСИ ПРД
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+  HAL_Delay(300);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+  HAL_Delay(300);
+  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
+  HAL_Delay(300);
+  // Инициализация wm-sm-42
+  WMSM42Init();
+  // Запуск приема команд с Linux
+  HAL_UART_Receive_IT(&huart2, &data, 1);
+  // Запуск таймера для работы светодиода
+  HAL_TIM_Base_Start_IT(&htim6);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -430,23 +501,221 @@ int main(void)
   while (1)
   {
 
-	  if(readFlag==1)
-	  {
-		  readFlag=0;
-		  transmit(str);
-	  }
-	  if(HAL_GetTick()-reciveTime>5000)
-	  {
+		// Фильтрация помех 1 разъема
+		if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
+		{
+			ReadRdy=0;
+			HAL_UART_Abort(&huart2);
+			HAL_UART_Receive_IT(&huart2, &data, 1);
+			countRx=0;
+		}
+		// Пришла какая-то посылка по linux
+		if(Readflag==1 && AccessRadio==0)
+		{
+			Readflag=0;
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
 
-		 // HAL_UART_Abort(&huart6);
-		//  HAL_UART_Init(&huart6);
-		//  WMSM42InitRX();
+			CRC_8c=BuffRx[MaxBuffOfCKT-1];
+			if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
+			{
+				switch(BuffRx[CommIndex])
+				{
+					case 1:
+					LedMode=1; // Режим мигания - посылка передается
+					Resolve4com=0;
+					CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
+					break;
+					case 2:
+					LedMode=1; // Режим мигания - посылка передается
+					Resolve4com=0;
+					CommandToRadio(2); // Команда открытия клапана
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
+					break;
+					case 3:
+					LedMode=1; // Режим мигания - посылка передается
+					Resolve4com=0;
+					CommandToRadio(3); // Команда запуска двигателя
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
+					break;
+					case 4:  // Внутренняя команда (запрос данных с ЦКТ)
+					break;
+					case 5:
+					LedMode=1; // Режим мигания - посылка передается
+					Resolve4com=0;
+					CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
+					break;
+					case 6:
+					LedMode=1; // Режим мигания - посылка передается
+					Resolve4com=0;
+					CommandToRadio(6); // Команда закрытия клапана
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
+					break;
+				}
+			}
+			// Продолжаем ожидать посылку с Linux
+			countRx=0;
+			HAL_UART_Abort(&huart2);
+			HAL_UART_Receive_IT(&huart2, &data, 1);
+		}
+        // Пришло что-то по радиоканалу
+		if(ReadflagWm==1)
+		{
+			Mass_toData8(Buff_rx,TX_RX_Radio,);
+			Buff_rx
+			countWm=0;
+		}
+		// Прерывание по приему по радиоканалу
+		if(Get_NIRQ_Di0())
+		{
 
+			// Достаем посылку из буфера
+			Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
+			// Считаем CRC
+			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
+			// Очистка флагов
+			Rf96_LoRaClearIrq();
+			//Разрешаем прием по Usartу
+			UsartRXflagbusy=0;
 
-		  reciveTime=HAL_GetTick();
-	  }
+			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
+			{
+				// Останавливаем таймер
+				Delay_start=0;
+				Ms_Delay=0;
+				switch(TX_RX_Radio[CommIndex])
+				{
+					case 1:   // Команда начала записи: Создаем файл
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// Посылка принята успешно, отправляем запрос на данные, если нет команд с Linux
+					if(Readflag!=1)
+					{
+					Resolve4com=1; // Разрешение на 4 команду
+					LedMode=1; // Режим мигания - посылка передается
+					CommandToRadio(4);
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					AccessRadio=1;
+					} else AccessRadio=0;
+					break;
+					case 2:   // Команда открытия клапана
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// радиоканал не занят
+					AccessRadio=0;
+					break;
+					case 3:   // Команда запуска двигателя
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// радиоканал не занят
+					AccessRadio=0;
+					break;
+					case 4:   // Команда запроса данных с ЦКТ
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// Пересылаем принятый пакет на linux
+					for(uint8_t i=0;i<MaxBuffOfCKT-4;i++)
+					BuffTx[i+4]=TX_RX_Radio[i+1];
+					BuffTx[0]=0x7C;
+					BuffTx[1]=0x6E;
+					BuffTx[2]=0xA1;
+					BuffTx[3]=0x2C;
+					HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
+					// Посылка принята успешно, отправляем запрос на данные
+					if(Resolve4com==1 && Readflag!=1  ) // Если нет запрета на 4 команду, то отправляем ее
+					{
+					LedMode=1; // Режим мигания - посылка передается
+					CommandToRadio(4);
+					// Ожидаем команду
+					WMSM42RXmode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					AccessRadio=1;
+					} else AccessRadio=0;
+					// радиоканал не занят
+					break;
+					case 5:   // Команда закрытия файла на SD и запрет записи на SD
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// радиоканал не занят
+					AccessRadio=0;
+					break;
+					case 6:  // Команда закрытия клапана
+					LedMode=0; // посылка принята (просто зажигаем светодиод)
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
+					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					// радиоканал не занят
+					AccessRadio=0;
+					break;
+				}
+			}
+		}
 
+	// Если радиосигнал не был принят
+	if(RadioTimeoutRx==1)
+	{
+		// Останавливаем таймер
+		Delay_start=0;
+		Ms_Delay=0;
+		RadioTimeoutRx=0;
+		LedMode=0; // посылка пропущена (тушим светодиод)
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
+		// Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
+		if(Resolve4com==1 && Readflag!= 1)
+		{
+			LedMode=1; // Режим мигания - посылка передается
+			CommandToRadio(4); // Команда запроса данных
+			// Ожидаем команду
+			WMSM42RXmode();
+			// Запуск таймера для отслеживания таймаута
+			Delay_start=1;
+			Ms_Delay=0;
+			AccessRadio=1 ;
+		} else   AccessRadio=0;
 
+	}
 
     /* USER CODE END WHILE */
 
@@ -502,6 +771,44 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief TIM6 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM6_Init(void)
+{
+
+  /* USER CODE BEGIN TIM6_Init 0 */
+
+  /* USER CODE END TIM6_Init 0 */
+
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM6_Init 1 */
+
+  /* USER CODE END TIM6_Init 1 */
+  htim6.Instance = TIM6;
+  htim6.Init.Prescaler = 8400-1;
+  htim6.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim6.Init.Period = 0;
+  htim6.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim6) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim6, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM6_Init 2 */
+
+  /* USER CODE END TIM6_Init 2 */
+
 }
 
 /**
@@ -627,34 +934,77 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart==&huart6)
 	{
+		   Buff_rx[countWm]=dataWm;
+		  if(Buff_rx[countWm]=='\n')
+		  {
+			ReadflagWm=1;
+		  }
+		  else
+		  {
+			  countWm++;
+		  }
+		  HAL_UART_Receive_IT(&huart6, &dataWm, 1);
+	}
 
-
-	if(Buff_rx[0]!=0)
+	if(huart == &huart2)
 	{
+		ReadRdy=1;
 		reciveTime=HAL_GetTick();
-		Mass_toData8(&Buff_rx[6],str,29);
-		CRC_c=(str[27]<<8)+(str[28]);
-		if(Crc16(str, 27)==CRC_c)
+
+			// Заносим пришедший байт в массив
+			BuffRx[countRx]=data;
+			if(countRx==MaxBuffOfCKT-1)
+			{
+			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			  // Запрещаем 4 команду
+			  Resolve4com=0;
+			  // Устанавливаем флаг того, что посылка принята
+			  Readflag=1;
+			  UsartRXflagbusy=1;
+			}
+			else
+			{
+			  countRx++;
+			}
+
+		HAL_UART_Receive_IT(&huart2, &data, 1);
+	}
+}
+
+// Обработчик прерываний таймера
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+	if(htim==&htim6)  // мигание светодиодов
+	{
+		if(LedMode==1) // 1 светодиод
 		{
-			readFlag=1;
+			HAL_GPIO_TogglePin(GPIOC, GPIO_PIN_1);
 		}
-		//	HAL_UART_Receive_DMA(&huart6, Buff_rx, 62);
-
 	}
+}
 
+// Прерывание по системному таймеру
+void SysTick_Handler(void)
+{
+  /* USER CODE BEGIN SysTick_IRQn 0 */
+	if(Delay_start==1)
+	{
+		if(Ms_Delay<5000)
+		{
+			Ms_Delay++;
+		}
+		else
+		{
+			Delay_start=0;
+			Ms_Delay=0;
+			RadioTimeoutRx=1; // произошло прерывание
+		}
 	}
+  /* USER CODE END SysTick_IRQn 0 */
+	HAL_IncTick();
+  /* USER CODE BEGIN SysTick_IRQn 1 */
 
-
-	  /*
-	  while(Buff_rx[0]!='O' && Buff_rx[1]!='K' )
-	  {
-		  HAL_UART_Transmit(&huart6, buf_com_Tx, sizeof(buf_com_Tx),100);
-		  HAL_UART_Receive(&huart6, Buff_rx, 7,100);
-	  }
-	  HAL_UART_Receive_IT(&huart6, Buff_rx, 11);
-*/
-
-
+  /* USER CODE END SysTick_IRQn 1 */
 }
 /* USER CODE END 4 */
 

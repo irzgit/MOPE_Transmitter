@@ -128,8 +128,6 @@ uint8_t BuffCkt[MaxBuffOfCKT];
 uint8_t BuffMidW[MaxBuffOfCKT];
 // Для синхронизации с ЦКТ
 uint8_t readFlag;
-// Переменная запроса на отправку данных по радио
-uint8_t RadioIrq=0;
 // Буфер для записи на sd карту данных с ЦКТ (после парсера)
 uint8_t SDbufWrite[163];
 // Счетчик данного файла
@@ -218,32 +216,6 @@ void UserDelayStart(uint32_t Delay)
 	TimeDelay=Delay;
 	Delay_start=1;
 }
-// Функция передачи по радиоканалу
-void CommandToRadio(uint8_t command)
-{
-	// Вход в режим передачи
-	 Rf96_Lora_TX_mode();
-	// Обнуляем массив
-	for(uint8_t i=0;i<RadioMaxBuff;i++)
-	{
-		TX_RX_Radio[i]=0;
-	}
-    // Заносим команду
-	TX_RX_Radio[CommIndex]=command;
-	//Подсчет CRC16
-	CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
-	TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
-	TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
-	// Установка адреса TX в буфере FIFO
-	Rf96_TX_FifoAdr(0x80);
-	// Устанавливает указатель на адрес начала массива TX в FIFO
-	Rf96_FIFO_point(0x80);
-    // Очистка флагов
-	Rf96_LoRaClearIrq();
-    // Отправка посылки
-	Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
-}
-
 // Перевод Числа в массив
 /*
 Number - переводимое число
@@ -426,11 +398,40 @@ void SyncCKT(void)
 		HAL_UART_Receive_DMA(&huart5,BuffCkt, MaxBuffOfCKT);
 	}
 }
+// Функция передачи по радиоканалу
+void CommandToRadio(uint8_t Comm)
+{
+	for(uint8_t i=0;i<RadioMaxBuff-3;i++)
+	{
+		TX_RX_Radio[i+1]=BuffMidW[i+4];
+	}
+	// заносим в 1 элемент 4 команду
+	TX_RX_Radio[0]=Comm;
+	// Отсылаем ответ
+	Rf96_Lora_TX_mode();
+	//Подсчет CRC16
+	CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
+	TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
+	TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
+	// Установка адреса TX в буфере FIFO
+	Rf96_TX_FifoAdr(0x80);
+	// Устанавливает указатель на адрес начала массива TX в FIFO
+	Rf96_FIFO_point(0x80);
+	// Очистка флагов
+	Rf96_LoRaClearIrq();
+	// Отправка посылки
+	Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
+	// следующее Прерывание будет по передаче
+	ModeRadio=1;
+	// Обнуляем массив
+	for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+		BuffMidW[i]=0;
+}
 // Команда начала записи на SD карту
 void RXCommande1(void)
 {
-	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
-	StopWriteToSD();
+	// Запрещаем запись на SD
+	ResolveSDWrite=0;
 	// Запись в память номера файла, на котором мы находимся
 	CountFileNow=ReadNumofFileSD();
 	if(CountFileNow>=9) CountFileNow=0;
@@ -438,39 +439,25 @@ void RXCommande1(void)
 	WriteNumofFileSD(CountFileNow);
 	//Записываем команду в историю
 	CommandHistoryWrite(1);
-	// создаем новый файл
-	fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_CREATE_ALWAYS | FA_WRITE);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
-	{
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-		while(1);
-	}
-	ResolveSDWrite=1; // Открываем доступ к записи на SD
+	// Открываем доступ к записи на SD
+	ResolveSDWrite=1;
 	// Отсылаем ответ
-	ModeRadio=1;
 	CommandToRadio(1);
 }
 // Команда включения клапаном
 void RXCommande2(void)
 {
-	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
-	StopWriteToSD();
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_SET);
     //Записываем команду в историю
     CommandHistoryWrite(2);
 	// Отсылаем ответ
-	ModeRadio=1;
     CommandToRadio(2);
 }
 
 // Команда включения двигателя
 void RXCommande3(void)
 {
-	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
-	StopWriteToSD();
 	// Подаем единицу на двигатель
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_SET);
     //Записываем команду в историю
@@ -481,47 +468,36 @@ void RXCommande3(void)
         UserDelayStart(5000);
     } else
     {
+    	// Запускаем задержку
     	UserDelayStart((uint32_t)(TX_RX_Radio[1]*1000));
     }
 	// Отсылаем ответ
-	ModeRadio=1;
     CommandToRadio(3);
 }
 // Команда - запрос на отправку данных
 void RXCommande4(void)
 {
-	RadioIrq=1;
+	// Отсылаем ответ
+	CommandToRadio(4);
 }
 // Команда начала закрытия файла на SD карте
 void RXCommande5(void)
 {
-	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
-	StopWriteToSD();
+	// запрещаем запись на SD
+	ResolveSDWrite=0;
     //Записываем команду в историю
     CommandHistoryWrite(5);
-	fres=f_mount(NULL, "", 0);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
-	{
-		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
-		while(1);
-	}
     // Отсылаем ответ
-    ModeRadio=1;
     CommandToRadio(5);
 }
 // Команда закрытия клапана
 void RXCommande6(void)
 {
-	// Закрываем предыдущий открытый файл ( если он есть) и запрещаем запись на SD
-	StopWriteToSD();
 	// Подаем единицу на клапан
 	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_12, GPIO_PIN_RESET);
     //Записываем команду в историю
     CommandHistoryWrite(6);
 	// Отсылаем ответ
-	ModeRadio=1;
     CommandToRadio(6);
 }
 // Парсер
@@ -669,6 +645,15 @@ int main(void)
 		{
 			// Запись на SD
 			DataConv();
+			// создаем новый файл
+			fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_OPEN_APPEND | FA_WRITE);
+			if(fres == FR_OK)
+			{ // Если проблема с флешкой  выключаем 1 светодиод
+			} else
+			{
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
+			}
 			fres = f_write(&fil, SDbufWrite, 161, &bytesWrote);
 			if (fres != FR_OK)
 			{
@@ -677,36 +662,17 @@ int main(void)
 				while(1);
 			}
 			// Синхронизация файла и sd карты
-			fres = f_sync(&fil);
-			ReadyToWrite=0;
-		}
-		// Если пришел запрос на отправку измерений по радио
-		if(RadioIrq==1 && ResolveSDWrite==1)
-		{
-			for(uint8_t i=0;i<RadioMaxBuff-3;i++)
+			//fres = f_sync(&fil);
+			fres=f_close(&fil);
+			if(fres == FR_OK)
+			{ // Если проблема с флешкой  выключаем 1 светодиод
+			} else
 			{
-				TX_RX_Radio[i+1]=BuffMidW[i+4];
+				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+				while(1);
 			}
-			// заносим в 1 элемент 4 команду
-			TX_RX_Radio[0]=4;
-			// Отсылаем ответ
-		    Rf96_Lora_TX_mode();
-			//Подсчет CRC16
-			CRC_c=Crc16(TX_RX_Radio,RadioMaxBuff-2);
-			TX_RX_Radio[RadioMaxBuff-2]=(uint8_t)(CRC_c>>8);
-			TX_RX_Radio[RadioMaxBuff-1]=(uint8_t)CRC_c;
-			// Установка адреса TX в буфере FIFO
-			Rf96_TX_FifoAdr(0x80);
-			// Устанавливает указатель на адрес начала массива TX в FIFO
-			Rf96_FIFO_point(0x80);
-		    // Очистка флагов
-			Rf96_LoRaClearIrq();
-		    // Отправка посылки
-			Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
-            // Запрещаем передачу по радио
-			RadioIrq=0;
-			// следующее Прерывание будет по передаче
-			ModeRadio=1;
+            // Нечего записывать
+			ReadyToWrite=0;
 		}
 		// Окончание задержки
 		if(Timeout==1)

@@ -30,10 +30,12 @@
 /* USER CODE BEGIN PTD */
 // Индекс комманды в массиве, пришедшего по радиоканалу
 #define CommIndex 0
+// Индекс комманды в массиве, пришедшего c Linux
+#define CommIndexLinux 42
 // Количество элементов в массиве для радиопередачи
 #define RadioMaxBuff 42
 // Количество элементов, приходящих с ЦКТ
-#define MaxBuffOfCKT 43
+#define MaxBuffOfCKT 45
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -88,8 +90,6 @@ uint8_t countRx=0;
 uint8_t data=0;
 // Маркер того, что пришли новые данные с usart
 uint8_t Readflag=0;
-// Переменная рарешающая постоянный запрос данных
-uint8_t Resolve4com=0;
 // Переменные, отвечающие за режимы светодиодов
 uint8_t LedMode=0;
 // Для фильтрации помех с Usart
@@ -106,6 +106,8 @@ uint32_t Ms_Delay=0;
 uint8_t Delay_start=0;
 // Переменная отвечающая за занятость прима по Linux
 uint8_t UsartRXflagbusy=0;
+// Последняя отправленная команда
+uint8_t Com4Active=0;
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -216,7 +218,7 @@ void CommandToRadio(uint8_t command)
 	if(command==3)
 	{
 		// Заносим задержку в секундах
-		TX_RX_Radio[1]=BuffRx[1];
+		TX_RX_Radio[1]=BuffRx[43];
 	}
     // Заносим команду
 	TX_RX_Radio[CommIndex]=command;
@@ -232,6 +234,40 @@ void CommandToRadio(uint8_t command)
 	Rf96_LoRaClearIrq();
     // Отправка посылки
 	Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
+}
+// Отправка команды на Linux
+void Command_to_Linux(uint8_t cmd)
+{
+	for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+		BuffTx[i]=0;
+	for(uint8_t i=0;i<MaxBuffOfCKT-6;i++)
+		BuffTx[i+4]=TX_RX_Radio[i+1];
+	BuffTx[0]=0x7C;
+	BuffTx[1]=0x6E;
+	BuffTx[2]=0xA1;
+	BuffTx[3]=0x2C;
+	BuffTx[42]=cmd;
+	BuffTx[44]=Crc8(BuffTx,MaxBuffOfCKT-1);
+	HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
+}
+// Отправка 4 команды по радио
+void Command4_send(void)
+{
+	if(Com4Active==1) // Если разрешена 4 команда
+	{
+		// Посылка принята успешно, отправляем запрос на данные, если нет команд с Linux
+		if(Readflag!=1)
+		{
+			LedMode=1; // Режим мигания - посылка передается
+			CommandToRadio(4);
+			// Ожидаем команду
+			Rf96_Lora_RX_mode();
+			// Запуск таймера для отслеживания таймаута
+			Delay_start=1;
+			Ms_Delay=0;
+			AccessRadio=1;
+		} else AccessRadio=0;
+	}
 }
 
 /* USER CODE END 0 */
@@ -298,8 +334,6 @@ int main(void)
 			HAL_UART_Receive_IT(&huart2, &data, 1);
 			countRx=0;
 		}
-
-
 		// Пришла какая-то посылка по linux
 		if(Readflag==1 && AccessRadio==0)
 		{
@@ -309,11 +343,10 @@ int main(void)
 			CRC_8c=BuffRx[MaxBuffOfCKT-1];
 			if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
 			{
-				switch(BuffRx[CommIndex])
+				switch(BuffRx[CommIndexLinux])
 				{
 					case 1:
 					LedMode=1; // Режим мигания - посылка передается
-					Resolve4com=0;
 					CommandToRadio(1);  // Команда начала записи: Создаем новый файл и начинаем прием данных
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -325,7 +358,6 @@ int main(void)
 					break;
 					case 2:
 					LedMode=1; // Режим мигания - посылка передается
-					Resolve4com=0;
 					CommandToRadio(2); // Команда открытия клапана
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -337,7 +369,6 @@ int main(void)
 					break;
 					case 3:
 					LedMode=1; // Режим мигания - посылка передается
-					Resolve4com=0;
 					CommandToRadio(3); // Команда запуска двигателя
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -351,7 +382,6 @@ int main(void)
 					break;
 					case 5:
 					LedMode=1; // Режим мигания - посылка передается
-					Resolve4com=0;
 					CommandToRadio(5); // Команда закрытия файла на SD и запрет записи на SD
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -363,7 +393,6 @@ int main(void)
 					break;
 					case 6:
 					LedMode=1; // Режим мигания - посылка передается
-					Resolve4com=0;
 					CommandToRadio(6); // Команда закрытия клапана
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -373,6 +402,20 @@ int main(void)
 					// Занимаем радиоканал
 					AccessRadio=1;
 					break;
+				}
+			} else // Если CRC8 не совпало продолжаем отправлять 4 команду, если она отправлялась до этого
+			{
+				if(Com4Active==1) // Если мы попадаем сюда во время приема данных
+				{
+					LedMode=1; // Режим мигания - посылка передается
+					CommandToRadio(4);
+					// Ожидаем команду
+					Rf96_Lora_RX_mode();
+					// Запуск таймера для отслеживания таймаута
+					Delay_start=1;
+					Ms_Delay=0;
+					// Занимаем радиоканал
+					AccessRadio=1;
 				}
 			}
 			// Продолжаем ожидать посылку с Linux
@@ -384,7 +427,6 @@ int main(void)
 		// Прерывание по приему по радиоканалу
 		if(Get_NIRQ_Di0())
 		{
-
 			// Достаем посылку из буфера
 			Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
 			// Считаем CRC
@@ -408,8 +450,8 @@ int main(void)
 					// Посылка принята успешно, отправляем запрос на данные, если нет команд с Linux
 					if(Readflag!=1)
 					{
-					Resolve4com=1; // Разрешение на 4 команду
 					LedMode=1; // Режим мигания - посылка передается
+					Com4Active=1; // 4 команда будет посылаться всегда
 					CommandToRadio(4);
 					// Ожидаем команду
 					Rf96_Lora_RX_mode();
@@ -423,30 +465,24 @@ int main(void)
 					LedMode=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-					// радиоканал не занят
-					AccessRadio=0;
+					Command_to_Linux(2);
+					Command4_send();
 					break;
 					case 3:   // Команда запуска двигателя
 					LedMode=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-					// радиоканал не занят
-					AccessRadio=0;
+					Command_to_Linux(3);
+					Command4_send();
 					break;
 					case 4:   // Команда запроса данных с ЦКТ
 					LedMode=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
 					// Пересылаем принятый пакет на linux
-					for(uint8_t i=0;i<MaxBuffOfCKT-4;i++)
-					BuffTx[i+4]=TX_RX_Radio[i+1];
-					BuffTx[0]=0x7C;
-					BuffTx[1]=0x6E;
-					BuffTx[2]=0xA1;
-					BuffTx[3]=0x2C;
-					HAL_UART_Transmit(&huart2, BuffTx, MaxBuffOfCKT,100);
+					Command_to_Linux(1);
 					// Посылка принята успешно, отправляем запрос на данные
-					if(Resolve4com==1 && Readflag!=1  ) // Если нет запрета на 4 команду, то отправляем ее
+					if(Com4Active==1 && Readflag!=1  ) // Если нет запрета на 4 команду, то отправляем ее
 					{
 					LedMode=1; // Режим мигания - посылка передается
 					CommandToRadio(4);
@@ -463,6 +499,8 @@ int main(void)
 					LedMode=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
+					Com4Active=0; // запрещаем отправку 4 команды
+					Command_to_Linux(5);
 					// радиоканал не занят
 					AccessRadio=0;
 					break;
@@ -470,14 +508,14 @@ int main(void)
 					LedMode=0; // посылка принята (просто зажигаем светодиод)
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 					HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
-					// радиоканал не занят
-					AccessRadio=0;
+					Command_to_Linux(6);
+					Command4_send();
 					break;
 				}
 			}
 		}
 
-	// Если радиосигнал не был принят
+	// Если радиосигнал не был принят (таймаут)
 	if(RadioTimeoutRx==1)
 	{
 		// Останавливаем таймер
@@ -489,7 +527,7 @@ int main(void)
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
 		Rf96_LoRaClearIrq();
 		// Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
-		if(Resolve4com==1 && Readflag!= 1)
+		if(Com4Active==1 && Readflag!= 1)
 		{
 			LedMode=1; // Режим мигания - посылка передается
 			CommandToRadio(4); // Команда запроса данных
@@ -755,25 +793,19 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		ReadRdy=1;
 		reciveTime=HAL_GetTick();
-        // Если предыдущая посылка не обработана
-		//if(UsartRXflagbusy==0)
-		//{
-			// Заносим пришедший байт в массив
-			BuffRx[countRx]=data;
-			if(countRx==MaxBuffOfCKT-1)
-			{
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-			  // Запрещаем 4 команду
-			  Resolve4com=0;
-			  // Устанавливаем флаг того, что посылка принята
-			  Readflag=1;
-			  UsartRXflagbusy=1;
-			}
-			else
-			{
-			  countRx++;
-			}
-		//}
+		// Заносим пришедший байт в массив
+		BuffRx[countRx]=data;
+		if(countRx==MaxBuffOfCKT-1)
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			// Устанавливаем флаг того, что посылка принята
+			Readflag=1;
+			UsartRXflagbusy=1;
+		}
+		else
+		{
+			countRx++;
+		}
 
 		HAL_UART_Receive_IT(&huart2, &data, 1);
 	}
@@ -789,7 +821,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 	}
 }
-
 // Прерывание по системному таймеру
 void SysTick_Handler(void)
 {

@@ -540,8 +540,8 @@ void Rf96_bandwide_CR_HeadreMod(uint8_t bandwide_value, uint8_t CR_Value, uint8_
 
 	//SPIWrite(LR_RegModemConfig1,(0x00<<4+(CR_Value<<1)+HeaderMod_value));
 	//SPIWrite(LR_RegModemConfig1,0x0E); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
-	SPIWrite(LR_RegModemConfig1,0x21); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
- 80005ee:	2121      	movs	r1, #33	; 0x21
+	SPIWrite(LR_RegModemConfig1,0x25); // 8C    Без CRC16 , 125 khz, cr 4/8, optimize on
+ 80005ee:	2125      	movs	r1, #37	; 0x25
  80005f0:	201d      	movs	r0, #29
  80005f2:	f000 ff7d 	bl	80014f0 <SPIWrite>
 	//SPIWrite(LR_RegModemConfig1,0x8E); // с CRC
@@ -1717,7 +1717,7 @@ int main(void)
  8000c96:	bf00      	nop
  8000c98:	e014      	b.n	8000cc4 <main+0x1ec>
 				}
-			} else // Если CRC16 не совпало продолжаем отправлять 4 команду, если она отправлялась до этого
+			} else // Если CRC8 не совпало продолжаем отправлять 4 команду, если она отправлялась до этого
 			{
 				if(Com4Active==1) // Если мы попадаем сюда во время приема данных
  8000c9a:	4b68      	ldr	r3, [pc, #416]	; (8000e3c <main+0x364>)
@@ -1750,7 +1750,6 @@ int main(void)
  8000cc0:	2201      	movs	r2, #1
  8000cc2:	701a      	strb	r2, [r3, #0]
 				}
-
 			}
 			// Продолжаем ожидать посылку с Linux
 			countRx=0;
@@ -1776,7 +1775,6 @@ int main(void)
  8000ce6:	2b00      	cmp	r3, #0
  8000ce8:	f000 810a 	beq.w	8000f00 <main+0x428>
 		{
-
 			// Достаем посылку из буфера
 			Rf96_DataRX_From_FiFO((char*)TX_RX_Radio);
  8000cec:	4855      	ldr	r0, [pc, #340]	; (8000e44 <main+0x36c>)
@@ -2078,7 +2076,7 @@ int main(void)
 			}
 		}
 
-	// Если радиосигнал не был принят
+	// Если радиосигнал не был принят (таймаут)
 	if(RadioTimeoutRx==1)
  8000f00:	4b24      	ldr	r3, [pc, #144]	; (8000f94 <main+0x4bc>)
  8000f02:	781b      	ldrb	r3, [r3, #0]
@@ -2922,7 +2920,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  800140c:	40020800 	.word	0x40020800
 
 08001410 <SysTick_Handler>:
-
 // Прерывание по системному таймеру
 void SysTick_Handler(void)
 {

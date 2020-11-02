@@ -37,11 +37,9 @@
 // Индекс комманды в массиве, пришедшего c Linux
 #define CommIndexLinux 42
 
-
+//Массивы приема и передачи с модулемwm-sm-42
 uint8_t Buff_rx[200];
 uint8_t Buff_tx[200];
-uint8_t str[29];
-
 //CRC8
 uint8_t CRC_8c=0;
 //CRC16
@@ -80,8 +78,7 @@ uint8_t RadioTimeoutRx=0;
 uint32_t Ms_Delay=0;
 // Начало задержки
 uint8_t Delay_start=0;
-// Переменная отвечающая за занятость прима по Linux
-uint8_t UsartRXflagbusy=0;
+
 
 
 /* USER CODE END PTD */
@@ -183,10 +180,7 @@ void Mass_toData8(uint8_t *pcBlock,uint8_t* data8, unsigned short len) //rx_buff
 	}
 
 }
-
-
-
-
+// Инициализация wm-sm-42
 void WMSM42Init(void)
 {
 	//Начальная инфа
@@ -197,77 +191,67 @@ void WMSM42Init(void)
 	for(uint8_t i=0;i<20;i++)
 		Buff_rx[i]=0;
 	HAL_UART_Transmit(&huart6, buf_EchoOff, sizeof(buf_EchoOff),100); //отключаем эхо
-	HAL_Delay(100);
+	while(dataWm!='#');
+	//HAL_Delay(100);
 	ReadflagWm=0;
 	countWm=0;
 	for(uint8_t i=0;i<20;i++)
 		Buff_rx[i]=0;
 	HAL_UART_Transmit(&huart6, buf_com1, sizeof(buf_com1),100); // Спящий режим
-	HAL_Delay(100);
+	while(dataWm!='#');
+	//HAL_Delay(100);
 	ReadflagWm=0;
 	countWm=0;
 	for(uint8_t i=0;i<20;i++)
 		Buff_rx[i]=0;
 	HAL_UART_Transmit(&huart6, buf_com2, sizeof(buf_com2),100); // Настройки
-	HAL_Delay(100);
+	while(dataWm!='#');
+	//HAL_Delay(100);
 	ReadflagWm=0;
 	countWm=0;
 	for(uint8_t i=0;i<20;i++)
 		Buff_rx[i]=0;
-	/*
-	HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100); // Длина посылки
-	HAL_Delay(100);
-	ReadflagWm=0;
-	countWm=0;
-	HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100); // Длина преамбулы
-	HAL_Delay(100);
-	ReadflagWm=0;
-	countWm=0;
-	*/
 }
+// Вход в режим передачи wm-sm-42
 void WMSM42TXmode(void)
 {
 	HAL_UART_Transmit(&huart6, buf_com3_TX_mode, sizeof(buf_com3_TX_mode),100);
-	HAL_Delay(100);
+	//HAL_Delay(100);
+	while(dataWm!='#');
 	ReadflagWm=0;
 	countWm=0;
 	for(uint8_t i=0;i<20;i++)
 		Buff_rx[i]=0;
-	/*
-	HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100); // Длина посылки
-	while(ReadflagWm==0);
-	ReadflagWm=0;
-	countWm=0;
-	HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100); // Длина преамбулы
-	while(ReadflagWm==0);
-	ReadflagWm=0;
-	countWm=0;
-	*/
 }
+// Вход в режим приема wm-sm-42
 void WMSM42RXmode(void)
 {
 	HAL_UART_Transmit(&huart6, buf_com3_RX_mode, sizeof(buf_com3_RX_mode),100);
-	HAL_Delay(100);
+	//HAL_Delay(10);
+	while(dataWm!='#');
 	ReadflagWm=0;
 	countWm=0;
 	HAL_UART_Transmit(&huart6, buf_paylen, sizeof(buf_paylen),100); // Длина посылки
-	HAL_Delay(50);
+	//HAL_Delay(10);
+	while(dataWm!='#');
 	ReadflagWm=0;
 	countWm=0;
 	HAL_UART_Transmit(&huart6, buf_preamlen, sizeof(buf_preamlen),100); // Длина преамбулы
-	HAL_Delay(50);
+	while(dataWm!='#');
+	HAL_Delay(10);
 	ReadflagWm=0;
 	countWm=0;
-
 }
+// Передача пакета по радиоканалу
 void WMSM42TXsend(uint8_t* mass)
 {
 	Data8_toMassHex(mass,42,buf_com_Tx,9);
 	HAL_UART_Transmit(&huart6, buf_com_Tx, sizeof(buf_com_Tx),100);
-	HAL_Delay(1000);
+	HAL_Delay(1500);
 	ReadflagWm=0;
 	countWm=0;
 }
+// Получение полезной части из поссылки, пришедшей по радио
 void WMSM42GetPacket(uint8_t* mass)
 {
 	Mass_toData8(&mass[6],TX_RX_Radio,42);
@@ -476,13 +460,13 @@ int main(void)
   HAL_UART_Receive_IT(&huart2, &data, 1);
   // Запуск таймера для работы светодиода
   HAL_TIM_Base_Start_IT(&htim6);
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
 		// Фильтрация помех 1 разъема
 		if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
 		{
@@ -584,13 +568,13 @@ int main(void)
 		// Прерывание по приему по радиоканалу
 		if(ReadflagWm==1)
 		{
+
 			ReadflagWm=0;
 			//Раскрываем посылку
 			WMSM42GetPacket(Buff_rx);
 			// Считаем CRC
+
 			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
-			//Разрешаем прием по Usartу
-			UsartRXflagbusy=0;
 
 			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
 			{
@@ -606,15 +590,15 @@ int main(void)
 					// Посылка принята успешно, отправляем запрос на данные, если нет команд с Linux
 					if(Readflag!=1)
 					{
-					LedMode=1; // Режим мигания - посылка передается
-					Com4Active=1; // 4 команда будет посылаться всегда
-					CommandToRadio(4);
-					// Ожидаем команду
-					WMSM42RXmode();
-					// Запуск таймера для отслеживания таймаута
-					Delay_start=1;
-					Ms_Delay=0;
-					AccessRadio=1;
+						LedMode=1; // Режим мигания - посылка передается
+						Com4Active=1; // 4 команда будет посылаться всегда
+						CommandToRadio(4);
+						// Ожидаем команду
+						WMSM42RXmode();
+						// Запуск таймера для отслеживания таймаута
+						Delay_start=1;
+						Ms_Delay=0;
+						AccessRadio=1;
 					} else AccessRadio=0;
 					break;
 					case 2:   // Команда открытия клапана
@@ -640,14 +624,14 @@ int main(void)
 					// Посылка принята успешно, отправляем запрос на данные
 					if(Com4Active==1 && Readflag!=1  ) // Если нет запрета на 4 команду, то отправляем ее
 					{
-					LedMode=1; // Режим мигания - посылка передается
-					CommandToRadio(4);
-					// Ожидаем команду
-					WMSM42RXmode();
-					// Запуск таймера для отслеживания таймаута
-					Delay_start=1;
-					Ms_Delay=0;
-					AccessRadio=1;
+						LedMode=1; // Режим мигания - посылка передается
+						CommandToRadio(4);
+						// Ожидаем команду
+						WMSM42RXmode();
+						// Запуск таймера для отслеживания таймаута
+						Delay_start=1;
+						Ms_Delay=0;
+						AccessRadio=1;
 					} else AccessRadio=0;
 					// радиоканал не занят
 					break;
@@ -914,16 +898,20 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
 	if(huart==&huart6)
 	{
-		   Buff_rx[countWm]=dataWm;
-		  if(Buff_rx[countWm]=='\r')
-		  {
-			ReadflagWm=1;
-		  }
-		  else
-		  {
-			  countWm++;
-		  }
-		  HAL_UART_Receive_IT(&huart6, &dataWm, 1);
+		Buff_rx[countWm]=dataWm;
+		if(Buff_rx[countWm]=='\n')
+		{
+			if(Buff_rx[0]=='O' && Buff_rx[1]=='K' )
+			{
+				countWm=0;
+				ReadflagWm=0;
+			} else
+			{
+				ReadflagWm=1;
+			}
+		}
+		else countWm++;
+		HAL_UART_Receive_IT(&huart6, &dataWm, 1);
 	}
 
 	if(huart == &huart2)
@@ -931,20 +919,15 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		ReadRdy=1;
 		reciveTime=HAL_GetTick();
 
-			// Заносим пришедший байт в массив
-			BuffRx[countRx]=data;
-			if(countRx==MaxBuffOfCKT-1)
-			{
-			  HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
-			  // Устанавливаем флаг того, что посылка принята
-			  Readflag=1;
-			  UsartRXflagbusy=1;
-			}
-			else
-			{
-			  countRx++;
-			}
-
+		// Заносим пришедший байт в массив
+		BuffRx[countRx]=data;
+		if(countRx==MaxBuffOfCKT-1)
+		{
+			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
+			// Устанавливаем флаг того, что посылка принята
+			Readflag=1;
+		}
+		else countRx++;
 		HAL_UART_Receive_IT(&huart2, &data, 1);
 	}
 }

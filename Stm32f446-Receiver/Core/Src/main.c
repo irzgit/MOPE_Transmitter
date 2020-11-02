@@ -104,8 +104,6 @@ uint8_t RadioTimeoutRx=0;
 uint32_t Ms_Delay=0;
 // Начало задержки
 uint8_t Delay_start=0;
-// Переменная отвечающая за занятость прима по Linux
-uint8_t UsartRXflagbusy=0;
 // Последняя отправленная команда
 uint8_t Com4Active=0;
 /* USER CODE END PFP */
@@ -433,8 +431,6 @@ int main(void)
 			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
 			// Очистка флагов
 			Rf96_LoRaClearIrq();
-			//Разрешаем прием по Usartу
-			UsartRXflagbusy=0;
 
 			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
 			{

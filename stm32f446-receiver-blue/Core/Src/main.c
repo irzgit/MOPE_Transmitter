@@ -143,7 +143,6 @@ void Data8_toMassHex(uint8_t* Data,uint8_t DataLen, uint8_t* pcBlock, uint8_t St
 			Data[j] /= 16;
 		}
 	}
-
 }
 // Функция нахождения степени числа
 int powx(int base, int exponent)
@@ -155,7 +154,6 @@ int powx(int base, int exponent)
 	}
 	return result;
 }
-
 // Функция перевода массива символов Hex в массив чисел
 void Mass_toData8(uint8_t *pcBlock,uint8_t* data8, unsigned short len) //rx_buffer,rx_in-2
 {
@@ -480,7 +478,6 @@ int main(void)
 		{
 			Readflag=0;
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_RESET);
-
 			CRC_8c=BuffRx[MaxBuffOfCKT-1];
 			if(CRC_8c==Crc8(BuffRx,MaxBuffOfCKT-1)) // если CRC совпало
 			{
@@ -568,12 +565,10 @@ int main(void)
 		// Прерывание по приему по радиоканалу
 		if(ReadflagWm==1)
 		{
-
 			ReadflagWm=0;
 			//Раскрываем посылку
 			WMSM42GetPacket(Buff_rx);
 			// Считаем CRC
-
 			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
 
 			if(CRC_c==Crc16(TX_RX_Radio, RadioMaxBuff-2)) // Если CRC16 совпало
@@ -665,7 +660,6 @@ int main(void)
 		LedMode=0; // посылка пропущена (тушим светодиод)
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_SET);
-
 		// Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
 		if(Com4Active==1 && Readflag!= 1)
 		{
@@ -678,7 +672,6 @@ int main(void)
 			Ms_Delay=0;
 			AccessRadio=1 ;
 		} else   AccessRadio=0;
-
 	}
 
     /* USER CODE END WHILE */
@@ -905,10 +898,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			{
 				countWm=0;
 				ReadflagWm=0;
-			} else
-			{
-				ReadflagWm=1;
-			}
+			} else ReadflagWm=1;
 		}
 		else countWm++;
 		HAL_UART_Receive_IT(&huart6, &dataWm, 1);
@@ -918,7 +908,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 	{
 		ReadRdy=1;
 		reciveTime=HAL_GetTick();
-
 		// Заносим пришедший байт в массив
 		BuffRx[countRx]=data;
 		if(countRx==MaxBuffOfCKT-1)
@@ -931,7 +920,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 		HAL_UART_Receive_IT(&huart2, &data, 1);
 	}
 }
-
 // Обработчик прерываний таймера
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -943,7 +931,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 		}
 	}
 }
-
 // Прерывание по системному таймеру
 void SysTick_Handler(void)
 {

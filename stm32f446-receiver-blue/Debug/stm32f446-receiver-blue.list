@@ -480,7 +480,6 @@ void Data8_toMassHex(uint8_t* Data,uint8_t DataLen, uint8_t* pcBlock, uint8_t St
  80005e6:	d39a      	bcc.n	800051e <Data8_toMassHex+0x1a>
 		}
 	}
-
 }
  80005e8:	bf00      	nop
  80005ea:	371c      	adds	r7, #28
@@ -528,7 +527,6 @@ int powx(int base, int exponent)
  800062a:	4770      	bx	lr
 
 0800062c <Mass_toData8>:
-
 // Функция перевода массива символов Hex в массив чисел
 void Mass_toData8(uint8_t *pcBlock,uint8_t* data8, unsigned short len) //rx_buffer,rx_in-2
 {
@@ -1482,7 +1480,6 @@ int main(void)
  8000c32:	2108      	movs	r1, #8
  8000c34:	4898      	ldr	r0, [pc, #608]	; (8000e98 <main+0x320>)
  8000c36:	f001 fce9 	bl	800260c <HAL_GPIO_WritePin>
-
 			CRC_8c=BuffRx[MaxBuffOfCKT-1];
  8000c3a:	4ba0      	ldr	r3, [pc, #640]	; (8000ebc <main+0x344>)
  8000c3c:	f893 202c 	ldrb.w	r2, [r3, #44]	; 0x2c
@@ -1710,7 +1707,6 @@ int main(void)
  8000d7e:	2b01      	cmp	r3, #1
  8000d80:	f040 8108 	bne.w	8000f94 <main+0x41c>
 		{
-
 			ReadflagWm=0;
  8000d84:	4b53      	ldr	r3, [pc, #332]	; (8000ed4 <main+0x35c>)
  8000d86:	2200      	movs	r2, #0
@@ -1720,7 +1716,6 @@ int main(void)
  8000d8a:	4853      	ldr	r0, [pc, #332]	; (8000ed8 <main+0x360>)
  8000d8c:	f7ff fdd8 	bl	8000940 <WMSM42GetPacket>
 			// Считаем CRC
-
 			CRC_c=(TX_RX_Radio[RadioMaxBuff-2]<<8)+TX_RX_Radio[RadioMaxBuff-1];
  8000d90:	4b52      	ldr	r3, [pc, #328]	; (8000edc <main+0x364>)
  8000d92:	f893 3028 	ldrb.w	r3, [r3, #40]	; 0x28
@@ -2043,7 +2038,6 @@ int main(void)
  8000fc2:	2104      	movs	r1, #4
  8000fc4:	4811      	ldr	r0, [pc, #68]	; (800100c <main+0x494>)
  8000fc6:	f001 fb21 	bl	800260c <HAL_GPIO_WritePin>
-
 		// Отправляем еще один запрос на данные, иначе просто ожидаем команд с linux
 		if(Com4Active==1 && Readflag!= 1)
  8000fca:	4b11      	ldr	r3, [pc, #68]	; (8001010 <main+0x498>)
@@ -2686,14 +2680,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  8001390:	2200      	movs	r2, #0
  8001392:	701a      	strb	r2, [r3, #0]
  8001394:	e009      	b.n	80013aa <HAL_UART_RxCpltCallback+0x5e>
-			} else
-			{
-				ReadflagWm=1;
+			} else ReadflagWm=1;
  8001396:	4b23      	ldr	r3, [pc, #140]	; (8001424 <HAL_UART_RxCpltCallback+0xd8>)
  8001398:	2201      	movs	r2, #1
  800139a:	701a      	strb	r2, [r3, #0]
  800139c:	e005      	b.n	80013aa <HAL_UART_RxCpltCallback+0x5e>
-			}
 		}
 		else countWm++;
  800139e:	4b1e      	ldr	r3, [pc, #120]	; (8001418 <HAL_UART_RxCpltCallback+0xcc>)
@@ -2724,7 +2715,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  80013c6:	4602      	mov	r2, r0
  80013c8:	4b19      	ldr	r3, [pc, #100]	; (8001430 <HAL_UART_RxCpltCallback+0xe4>)
  80013ca:	601a      	str	r2, [r3, #0]
-
 		// Заносим пришедший байт в массив
 		BuffRx[countRx]=data;
  80013cc:	4b19      	ldr	r3, [pc, #100]	; (8001434 <HAL_UART_RxCpltCallback+0xe8>)
@@ -2786,7 +2776,6 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
  8001444:	20000118 	.word	0x20000118
 
 08001448 <HAL_TIM_PeriodElapsedCallback>:
-
 // Обработчик прерываний таймера
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
@@ -2822,7 +2811,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
  8001478:	40020800 	.word	0x40020800
 
 0800147c <SysTick_Handler>:
-
 // Прерывание по системному таймеру
 void SysTick_Handler(void)
 {

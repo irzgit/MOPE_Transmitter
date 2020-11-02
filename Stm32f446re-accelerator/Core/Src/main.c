@@ -239,10 +239,7 @@ uint8_t ReadNumofFileSD(void)
 	UINT bytesWroteInform;
 	// Открываем или создаем новый файл
 	fres = f_open(&filInform, "InfoSD.txt", FA_OPEN_ALWAYS | FA_READ);
-
-	if(fres == FR_OK) { // Если проблема с флешкой  выключаем 1 светодиод
-
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -255,9 +252,7 @@ uint8_t ReadNumofFileSD(void)
 		Num=BuffSDRead[28]-'0'; // количество файлов
 	}
 	fres=f_close(&filInform);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -271,9 +266,7 @@ uint8_t ReadNumofFileSD(void)
 		// История команд
 		fres = f_write(&filInform, "\t\tCommand History\nTime\tcommand\n", 31, &bytesWroteInform);
 		fres=f_close(&filInform);
-		if(fres == FR_OK)
-		{ // Если проблема с флешкой  выключаем 1 светодиод
-		} else
+		if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 		{
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
@@ -290,10 +283,7 @@ void WriteNumofFileSD(uint8_t Num)
 	UINT bytesWroteInform;
 	// Открываем или создаем новый файл
 	fres = f_open(&filInform, "InfoSD.txt", FA_OPEN_ALWAYS | FA_WRITE);
-
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -302,9 +292,7 @@ void WriteNumofFileSD(uint8_t Num)
 	BuffSDfileinfo[28]=Num+'0';
 	fres = f_write(&filInform, BuffSDfileinfo, 30, &bytesWroteInform);
 	fres=f_close(&filInform);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -318,9 +306,7 @@ void CommandHistoryWrite(uint8_t command)
 	UINT bytesWroteInform;
 	// Открываем или создаем новый файл
 	fres = f_open(&filInform, "InfoSD.txt", FA_OPEN_APPEND | FA_WRITE);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -334,10 +320,7 @@ void CommandHistoryWrite(uint8_t command)
 	BufFileInfoWr[10]=';';
 	BufFileInfoWr[11]='\n';
 	fres = f_write(&filInform, BufFileInfoWr, 12, &bytesWroteInform);
-	fres=f_close(&filInform);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -351,9 +334,7 @@ void HistoryOnOffUSI(void)
 	UINT bytesWroteInform;
 	// Открываем или создаем новый файл
 	fres = f_open(&filInform, "InfoSD.txt", FA_OPEN_APPEND | FA_WRITE);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -361,9 +342,7 @@ void HistoryOnOffUSI(void)
 	//Записываем количество данных
 	fres = f_write(&filInform, "Power On\n", 9, &bytesWroteInform);
 	fres=f_close(&filInform);
-	if(fres == FR_OK)
-	{ // Если проблема с флешкой  выключаем 1 светодиод
-	} else
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 		while(1);
@@ -376,9 +355,7 @@ void StopWriteToSD(void)
 	if(ResolveSDWrite==1)
 	{
 		fres=f_close(&fil);
-		if(fres == FR_OK)
-		{ // Если проблема с флешкой  выключаем 1 светодиод
-		} else
+		if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 		{
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 			while(1);
@@ -647,26 +624,21 @@ int main(void)
 			DataConv();
 			// создаем новый файл
 			fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_OPEN_APPEND | FA_WRITE);
-			if(fres == FR_OK)
-			{ // Если проблема с флешкой  выключаем 1 светодиод
-			} else
+			if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 			{
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 				while(1);
 			}
 			fres = f_write(&fil, SDbufWrite, 161, &bytesWrote);
-			if (fres != FR_OK)
+			if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 			{
-				// Выключение 1 светодиода, если какая-то проблема с записью на SD
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 				while(1);
 			}
 			// Синхронизация файла и sd карты
 			//fres = f_sync(&fil);
 			fres=f_close(&fil);
-			if(fres == FR_OK)
-			{ // Если проблема с флешкой  выключаем 1 светодиод
-			} else
+			if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 			{
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 				while(1);
@@ -682,7 +654,6 @@ int main(void)
 			HAL_GPIO_WritePin(GPIOB, GPIO_PIN_15, GPIO_PIN_RESET);
 			Timeout=0;
 		}
-
 
     /* USER CODE END WHILE */
 
@@ -1199,20 +1170,11 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				{
 					BuffMidW[i]=BuffCkt[i];
 				}
-
-			} else
-			{
-				CountCKT++;
-			}
-
-		} else  // Если данные не синхронизированы
-		{
-			readFlag=1;
-		}
+			} else CountCKT++;
+		} else readFlag=1;  // Если данные не синхронизированы
 		// стартуем таймер для дальнейшей проверки на подключение ЦКТ
 		HAL_TIM_Base_Start_IT(&htim10);
 	}
-
 }
 // Обработчик прерываний таймера
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)

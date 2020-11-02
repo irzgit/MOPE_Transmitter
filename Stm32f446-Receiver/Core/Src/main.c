@@ -156,7 +156,6 @@ unsigned short Crc16(unsigned char * pcBlock, unsigned short len)
 
     return crc;
 }
-
 // Таблица CRC8
 const unsigned char Crc8Table[256] = {
     0x00, 0x31, 0x62, 0x53, 0xC4, 0xF5, 0xA6, 0x97,
@@ -202,7 +201,6 @@ unsigned char Crc8(unsigned char *pcBlock, unsigned char len)
 
     return crc;
 }
-
 // Функция передачи по радиоканалу
 void CommandToRadio(uint8_t command)
 {
@@ -323,7 +321,6 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
 		// Фильтрация помех 1 разъема
 		if((HAL_GetTick()-reciveTime >200) && ReadRdy) // Если пришел 1 байт и в течении секунды больше ничего не пришло, считаем, что мы поймали помеху
 		{
@@ -510,7 +507,6 @@ int main(void)
 				}
 			}
 		}
-
 	// Если радиосигнал не был принят (таймаут)
 	if(RadioTimeoutRx==1)
 	{
@@ -796,12 +792,8 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 			HAL_GPIO_WritePin(GPIOC, GPIO_PIN_3, GPIO_PIN_SET);
 			// Устанавливаем флаг того, что посылка принята
 			Readflag=1;
-			UsartRXflagbusy=1;
 		}
-		else
-		{
-			countRx++;
-		}
+		else countRx++;
 
 		HAL_UART_Receive_IT(&huart2, &data, 1);
 	}

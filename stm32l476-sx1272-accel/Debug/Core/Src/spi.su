@@ -1,6 +1,0 @@
-spi.c:9:6:SPICmd8bit	16	static
-spi.c:22:9:SPIRead8bit	16	static
-spi.c:37:9:SPIRead	24	static
-spi.c:53:6:SPIWrite	16	static
-spi.c:68:6:SPIBurstRead	32	static
-spi.c:91:6:BurstWrite	24	static

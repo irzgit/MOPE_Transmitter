@@ -489,6 +489,21 @@ void DataConv(void)
 	}
 	SDbufWrite[160]='\n';
 }
+// Расчет CRC8 с ЦКТ
+uint8_t CKTcrc(uint8_t* data, uint8_t len)
+{
+	uint8_t sign=0;
+	for(uint8_t i=4;i<len+4;i++)
+	{
+		sign+=data[i-4];
+		if(sign & 0x80)
+		{
+			sign=sign<<1;
+			sign|=0x01;
+		} else sign=sign<<1;
+	}
+	return sign;
+}
 /* USER CODE END 0 */
 
 /**
@@ -1165,10 +1180,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				ReadyToWrite=1;
 				//  Время в мс, когда пришли данные
 				reciveTime = HAL_GetTick();
-				// Перезаписываем данные в массив посредник
-				for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+				//Если CRC8 с ЦКТ совпадает
+				if(BuffCkt[MaxBuffOfCKT-1]==CKTcrc(BuffCkt,MaxBuffOfCKT-1))
 				{
-					BuffMidW[i]=BuffCkt[i];
+					// Перезаписываем данные в массив посредник
+					for(uint8_t i=0;i<MaxBuffOfCKT;i++)
+					{
+						BuffMidW[i]=BuffCkt[i];
+					}
 				}
 			} else CountCKT++;
 		} else readFlag=1;  // Если данные не синхронизированы

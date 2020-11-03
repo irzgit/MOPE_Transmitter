@@ -320,6 +320,7 @@ void CommandHistoryWrite(uint8_t command)
 	BufFileInfoWr[10]=';';
 	BufFileInfoWr[11]='\n';
 	fres = f_write(&filInform, BufFileInfoWr, 12, &bytesWroteInform);
+	fres=f_close(&filInform);
 	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 	{
 		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
@@ -1181,14 +1182,14 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 				//  Время в мс, когда пришли данные
 				reciveTime = HAL_GetTick();
 				//Если CRC8 с ЦКТ совпадает
-				if(BuffCkt[MaxBuffOfCKT-1]==CKTcrc(BuffCkt,MaxBuffOfCKT-1))
-				{
+				//if(BuffCkt[MaxBuffOfCKT-1]==CKTcrc(BuffCkt,MaxBuffOfCKT-1))
+				//{
 					// Перезаписываем данные в массив посредник
 					for(uint8_t i=0;i<MaxBuffOfCKT;i++)
 					{
 						BuffMidW[i]=BuffCkt[i];
 					}
-				}
+				//}
 			} else CountCKT++;
 		} else readFlag=1;  // Если данные не синхронизированы
 		// стартуем таймер для дальнейшей проверки на подключение ЦКТ

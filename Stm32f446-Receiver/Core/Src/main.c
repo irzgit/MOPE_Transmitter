@@ -263,7 +263,7 @@ void Command4_send(void)
 			Ms_Delay=0;
 			AccessRadio=1;
 		} else AccessRadio=0;
-	}
+	} else   AccessRadio=0;
 }
 
 /* USER CODE END 0 */

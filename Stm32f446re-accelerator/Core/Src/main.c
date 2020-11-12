@@ -401,9 +401,6 @@ void CommandToRadio(uint8_t Comm)
 	Rf96_LoRaTxPacket((char*)TX_RX_Radio,RadioMaxBuff);
 	// следующее Прерывание будет по передаче
 	ModeRadio=1;
-	// Обнуляем массив
-	for(uint8_t i=0;i<MaxBuffOfCKT;i++)
-		BuffMidW[i]=0;
 }
 // Команда начала записи на SD карту
 void RXCommande1(void)
@@ -417,6 +414,20 @@ void RXCommande1(void)
 	WriteNumofFileSD(CountFileNow);
 	//Записываем команду в историю
 	CommandHistoryWrite(1);
+	// создаем новый файл и сразу его закрываем
+	fres = f_open(&fil, &(MassFileName[CountFileNow][0]), FA_CREATE_ALWAYS | FA_WRITE);
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
+	{
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		while(1);
+	}
+	// Закрытие файла и sd карты
+	fres=f_close(&fil);
+	if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
+	{
+		HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
+		while(1);
+	}
 	// Открываем доступ к записи на SD
 	ResolveSDWrite=1;
 	// Отсылаем ответ
@@ -651,8 +662,7 @@ int main(void)
 				HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_SET);
 				while(1);
 			}
-			// Синхронизация файла и sd карты
-			//fres = f_sync(&fil);
+			// Закрытие файла и sd карты
 			fres=f_close(&fil);
 			if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
 			{

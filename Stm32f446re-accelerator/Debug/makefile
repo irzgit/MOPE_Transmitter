@@ -59,8 +59,8 @@ Stm32f446re-accelerator.bin \
 all: Stm32f446re-accelerator.elf secondary-outputs
 
 # Tool invocations
-Stm32f446re-accelerator.elf: $(OBJS) $(USER_OBJS) /home/dmitriy/Рабочий\ стол/MOPE_Transmitter/Stm32f446re-accelerator/STM32F446RETX_FLASH.ld
-	arm-none-eabi-g++ -o "Stm32f446re-accelerator.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/dmitriy/Рабочий стол/MOPE_Transmitter/Stm32f446re-accelerator/STM32F446RETX_FLASH.ld" -Wl,-Map="Stm32f446re-accelerator.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
+Stm32f446re-accelerator.elf: $(OBJS) $(USER_OBJS) D:\moe\Rabota\IRZ\project2_Crimea\MOPE_Transmitter\Stm32f446re-accelerator\STM32F446RETX_FLASH.ld
+	arm-none-eabi-g++ -o "Stm32f446re-accelerator.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\moe\Rabota\IRZ\project2_Crimea\MOPE_Transmitter\Stm32f446re-accelerator\STM32F446RETX_FLASH.ld" -Wl,-Map="Stm32f446re-accelerator.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -lstdc++ -lsupc++ -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 

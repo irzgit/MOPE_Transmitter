@@ -65,10 +65,10 @@ DMA_HandleTypeDef hdma_usart3_rx;
 /*
  *  Режимы работы светодиодов:
  *
- *  1) Поочередное включение, затем выключение всех сразу, кроме 3го - Индикация того, что УСИ ПРД включился
+ *  1) Поочередное включение, затем выключение всех сразу, кроме 3го - �?ндикация того, что УС�? ПРД включился
  *  2) 1 светодиод горит - сд карта исправна, 1 светодиод не горит - проблема с сд картой
  *  3) 2 светодиод горит - прием с ЦКТ идет, 2 светодиод не горит - данные с ЦКТ не приходят
- *  4) 3 светодиод горит - остается гореть после включения УСИ ПРД
+ *  4) 3 светодиод горит - остается гореть после включения УС�? ПРД
  */
 
 /* USER CODE END PV */
@@ -87,7 +87,7 @@ static void MX_TIM6_Init(void);
 static void MX_TIM7_Init(void);
 static void MX_TIM10_Init(void);
 /* USER CODE BEGIN PFP */
-// Индекс комманды в массиве, пришедшего по радиоканалу
+// �?ндекс комманды в массиве, пришедшего по радиоканалу
 #define CommIndex 0
 // Количество элементов в массиве для радиопередачи
 #define RadioMaxBuff 42
@@ -263,7 +263,7 @@ uint8_t ReadNumofFileSD(void)
 		fres = f_open(&filInform, "InfoSD.txt", FA_OPEN_ALWAYS | FA_WRITE);
 		// Количество файлов
 		fres = f_write(&filInform, "\t\tFile info\nNumber of files:0;\n", 31, &bytesWroteInform);
-		// История команд
+		// �?стория команд
 		fres = f_write(&filInform, "\t\tCommand History\nTime\tcommand\n", 31, &bytesWroteInform);
 		fres=f_close(&filInform);
 		if(fres != FR_OK) // Если проблема с флешкой  выключаем 1 светодиод
@@ -489,6 +489,26 @@ void RXCommande6(void)
 	// Отсылаем ответ
     CommandToRadio(6);
 }
+// Команда закрытия клапана
+void RXCommande7(void)
+{
+	// Подаем единицу на оптопару
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_SET);
+    //Записываем команду в историю
+    CommandHistoryWrite(7);
+	// Отсылаем ответ
+    CommandToRadio(7);
+}
+// Команда закрытия клапана
+void RXCommande8(void)
+{
+	// Подаем нуля на оптопару
+	HAL_GPIO_WritePin(GPIOB, GPIO_PIN_2, GPIO_PIN_RESET);
+    //Записываем команду в историю
+    CommandHistoryWrite(8);
+	// Отсылаем ответ
+    CommandToRadio(8);
+}
 // Парсер
 void DataConv(void)
 {
@@ -559,7 +579,7 @@ int main(void)
   MX_TIM10_Init();
   /* USER CODE BEGIN 2 */
 
-	// Индикация включения УСИ ПРД
+	// �?ндикация включения УС�? ПРД
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_1, GPIO_PIN_RESET);
 	HAL_Delay(300);
 	HAL_GPIO_WritePin(GPIOC, GPIO_PIN_2, GPIO_PIN_RESET);
@@ -580,7 +600,7 @@ int main(void)
 	ReadNumofFileSD();
 	// Запись в историю информацию о подаче питания
 	HistoryOnOffUSI();
-	// Инициализация радиоканала (sx1272)
+	// �?нициализация радиоканала (sx1272)
 	Rf96_Lora_init();
 	// Режим приема
 	Rf96_Lora_RX_mode();
@@ -630,6 +650,12 @@ int main(void)
 					break;
 				case 6:    // Команда закрытия клапана
 					RXCommande6();
+					break;
+				case 7:// Подача еденицы на оптопару на закрытие двигателя
+					RXCommande7();
+					break;
+				case 8: // Снятие еденицы с оптопары на закрытие двигателя
+					RXCommande8();
 					break;
 				}
 			}
@@ -1104,8 +1130,8 @@ static void MX_GPIO_Init(void)
   HAL_GPIO_WritePin(GPIOC, GPIO_PIN_4|acel1_Pin|acel1_1_Pin, GPIO_PIN_RESET);
 
   /*Configure GPIO pin Output Level */
-  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|SSV_Pin|acel2_Pin|acel2_2_Pin 
-                          |Motor_Pin|GPIO_PIN_6, GPIO_PIN_RESET);
+  HAL_GPIO_WritePin(GPIOB, GPIO_PIN_1|GPIO_PIN_2|SSV_Pin|acel2_Pin 
+                          |acel2_2_Pin|Motor_Pin|GPIO_PIN_6, GPIO_PIN_RESET);
 
   /*Configure GPIO pin : B1_Pin */
   GPIO_InitStruct.Pin = B1_Pin;
@@ -1141,8 +1167,10 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(GPIOB, &GPIO_InitStruct);
 
-  /*Configure GPIO pins : SSV_Pin acel2_2_Pin Motor_Pin PB6 */
-  GPIO_InitStruct.Pin = SSV_Pin|acel2_2_Pin|Motor_Pin|GPIO_PIN_6;
+  /*Configure GPIO pins : PB2 SSV_Pin acel2_2_Pin Motor_Pin 
+                           PB6 */
+  GPIO_InitStruct.Pin = GPIO_PIN_2|SSV_Pin|acel2_2_Pin|Motor_Pin 
+                          |GPIO_PIN_6;
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
   GPIO_InitStruct.Pull = GPIO_NOPULL;
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;

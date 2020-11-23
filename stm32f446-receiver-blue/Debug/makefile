@@ -40,8 +40,8 @@ stm32f446-receiver-blue.bin \
 all: stm32f446-receiver-blue.elf secondary-outputs
 
 # Tool invocations
-stm32f446-receiver-blue.elf: $(OBJS) $(USER_OBJS) /home/dmitriy/Рабочий\ стол/MOPE_Transmitter/stm32f446-receiver-blue/STM32F446RETX_FLASH.ld
-	arm-none-eabi-gcc -o "stm32f446-receiver-blue.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"/home/dmitriy/Рабочий стол/MOPE_Transmitter/stm32f446-receiver-blue/STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm32f446-receiver-blue.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
+stm32f446-receiver-blue.elf: $(OBJS) $(USER_OBJS) D:\moe\Rabota\IRZ\project2_Crimea\MOPE_Transmitter\stm32f446-receiver-blue\STM32F446RETX_FLASH.ld
+	arm-none-eabi-gcc -o "stm32f446-receiver-blue.elf" @"objects.list" $(USER_OBJS) $(LIBS) -mcpu=cortex-m4 -T"D:\moe\Rabota\IRZ\project2_Crimea\MOPE_Transmitter\stm32f446-receiver-blue\STM32F446RETX_FLASH.ld" --specs=nosys.specs -Wl,-Map="stm32f446-receiver-blue.map" -Wl,--gc-sections -static --specs=nano.specs -mfpu=fpv4-sp-d16 -mfloat-abi=hard -mthumb -Wl,--start-group -lc -lm -Wl,--end-group
 	@echo 'Finished building target: $@'
 	@echo ' '
 
